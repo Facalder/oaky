@@ -1,6 +1,7 @@
+
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
-import { format, differenceInDays, startOfDay } from "date-fns";
+import { format } from "date-fns";
 
 export const AppContext = createContext();
 
@@ -11,6 +12,7 @@ export const AppProvider = ({ children }) => {
   const [tasks, setTasks] = useState([]);
   const [events, setEvents] = useState([]);
   const [records, setRecords] = useState({}); // Format: { "YYYY-MM-DD": { total: 0, tasks: { id: 0 } } }
+  const [diaries, setDiaries] = useState({}); // Format: { "yyyy-MM-dd": { bad: "", good: "", next: "" } }
   
   // --- TIMER STATES ---
   const [activeTask, setActiveTask] = useState({ id: 'default', title: "Select task", color: "bg-gray-300" });
@@ -24,30 +26,42 @@ export const AppProvider = ({ children }) => {
   const FOCUS_TIME = 25 * 60;
   const BREAK_TIME = 5 * 60;
 
+  // 1. INITIAL LOAD DARI LOCALSTORAGE
   useEffect(() => {
-    const savedTasks = JSON.parse(localStorage.getItem("dote_tasks")) || [
+    // Berikan default value (array dummy awal) jika localStorage masih kosong
+    const defaultTasks = [
       { id: 1, title: "Weight Training", category: "Exercise", color: "bg-[#5b45c2]" },
       { id: 2, title: "Reading every day", category: "Daily", color: "bg-green-400" }
     ];
+
+    const savedTasks = JSON.parse(localStorage.getItem("dote_tasks")) || defaultTasks;
     const savedEvents = JSON.parse(localStorage.getItem("dote_events")) || [];
     const savedRecords = JSON.parse(localStorage.getItem("dote_records")) || {};
+    const savedDiaries = JSON.parse(localStorage.getItem("dote_diaries")) || {}; 
     
     setTasks(savedTasks);
     setEvents(savedEvents);
     setRecords(savedRecords);
+    setDiaries(savedDiaries); 
     
-    if (savedTasks.length > 0) setActiveTask(savedTasks[0]);
+    if (savedTasks.length > 0) {
+      setActiveTask(savedTasks[0]);
+    }
+    
     setIsMounted(true);
   }, []);
 
+  // 2. AUTO-SAVE KE LOCALSTORAGE KETIKA DATA BERUBAH
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem("dote_tasks", JSON.stringify(tasks));
       localStorage.setItem("dote_events", JSON.stringify(events));
       localStorage.setItem("dote_records", JSON.stringify(records));
+      localStorage.setItem("dote_diaries", JSON.stringify(diaries)); 
     }
-  }, [tasks, events, records, isMounted]);
+  }, [tasks, events, records, diaries, isMounted]);
 
+  // 3. ENGINE TIMER UTAMA
   useEffect(() => {
     let interval;
     if (isRunning) {
@@ -68,6 +82,7 @@ export const AppProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [isRunning, activeMode, pomodoroSession]);
 
+  // 4. FUNGSI PAUSE DAN SIMPAN DURASI
   const handlePause = (timeToSave = time) => {
     setIsRunning(false);
     if (timeToSave === 0) return;
@@ -109,22 +124,28 @@ export const AppProvider = ({ children }) => {
     return records[todayStr]?.tasks[taskId] || 0;
   };
 
-  if (!isMounted) return null; 
-
   const toggleTaskCompletion = (taskId) => {
-  setTasks((prevTasks) =>
-    prevTasks.map((t) =>
-      t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t
-    )
-  );
-};
+    setTasks((prevTasks) =>
+      prevTasks.map((t) =>
+        t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t
+      )
+    );
+  };
+
+  if (!isMounted) return null; 
 
   return (
     <AppContext.Provider value={{
-      tasks, setTasks, events, setEvents, records, setRecords,
-      activeTask, setActiveTask, activeEvent, setActiveEvent,
-      activeMode, setActiveMode, isRunning, toggleTimer,
-      time, setTime, pomodoroSession, FOCUS_TIME, BREAK_TIME,
+      tasks, setTasks, 
+      events, setEvents, 
+      records, setRecords,
+      diaries, setDiaries,
+      activeTask, setActiveTask, 
+      activeEvent, setActiveEvent,
+      activeMode, setActiveMode, 
+      isRunning, toggleTimer,
+      time, setTime, 
+      pomodoroSession, FOCUS_TIME, BREAK_TIME,
       getTaskTotalToday, toggleTaskCompletion
     }}>
       {children}
