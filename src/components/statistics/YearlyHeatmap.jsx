@@ -1,25 +1,66 @@
+// src/components/statistics/YearlyHeatmap.jsx
 "use client";
+import { useState } from "react";
 import { Download, Clock } from "lucide-react";
+import { useAppContext } from "@/context/AppContext";
+import { subDays, addDays, startOfWeek, format, isAfter, startOfDay } from "date-fns";
 
 export default function YearlyHeatmap() {
-  // Generate baris per minggu secara vertikal (terbaru di atas, terlama di bawah)
-  // Total 13 minggu untuk mereplikasi proporsi di gambar (Maret -> Januari)
-  const weeks = Array.from({ length: 13 }, (_, weekIndex) => {
-    // Tentukan posisi label bulan di sisi kiri
-    let monthLabel = "";
-    if (weekIndex === 0) monthLabel = "Mar"; // Minggu pertama (Paling atas)
-    if (weekIndex === 5) monthLabel = "Feb"; // Pertengahan
-    if (weekIndex === 10) monthLabel = "Jan"; // Paling bawah
+  const { records } = useAppContext();
+  
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
 
-    // Generate 7 kotak (hari) untuk baris minggu ini
+  let totalSecondsSelectedYear = 0;
+  Object.keys(records).forEach(dateStr => {
+    if (dateStr.startsWith(selectedYear.toString())) {
+      totalSecondsSelectedYear += (records[dateStr].total || 0);
+    }
+  });
+  
+  const totalHours = Math.floor(totalSecondsSelectedYear / 3600);
+  const totalMinutes = Math.floor((totalSecondsSelectedYear % 3600) / 60);
+
+  const getColor = (totalSecs) => {
+    if (!totalSecs || totalSecs === 0) return "bg-[#f5f5f5]";
+    const hours = totalSecs / 3600;
+    
+    if (hours > 0 && hours <= 2) return "bg-[#dcedc8]";
+    if (hours > 2 && hours <= 6) return "bg-[#aed581]";
+    if (hours > 6 && hours <= 10) return "bg-[#7cb342]";
+    return "bg-[#33691e]"; 
+  };
+
+  const today = startOfDay(new Date());
+  const anchorDate = selectedYear === currentYear ? today : new Date(selectedYear, 11, 31);
+  const anchorWeekStart = startOfWeek(anchorDate, { weekStartsOn: 0 }); 
+
+  let lastMonth = -1;
+
+  const weeks = Array.from({ length: 13 }, (_, weekIndex) => {
+    const weekStartDate = subDays(anchorWeekStart, weekIndex * 7);
+    
     const days = Array.from({ length: 7 }, (_, dayIndex) => {
-      // Mock data hijau-hijau tipis untuk visual
-      const id = weekIndex * 7 + dayIndex;
-      if (id === 3 || id === 18 || id === 42) return "bg-[#dcedc8]";
-      if (id === 12 || id === 25) return "bg-[#aed581]";
-      if (id === 30) return "bg-[#7cb342]";
-      return "bg-[#f5f5f5]";
+      const dateToEvaluate = addDays(weekStartDate, dayIndex);
+      const dateStr = format(dateToEvaluate, "yyyy-MM-dd");
+      
+      const isFuture = isAfter(startOfDay(dateToEvaluate), today);
+      const isOutsideSelectedYear = dateToEvaluate.getFullYear() > selectedYear;
+      
+      if (isFuture || isOutsideSelectedYear) {
+        return "bg-transparent"; 
+      }
+
+      const dayRecord = records[dateStr] || { total: 0 };
+      return getColor(dayRecord.total);
     });
+
+    const monthOfThisWeek = weekStartDate.getMonth();
+    let monthLabel = "";
+    if (monthOfThisWeek !== lastMonth) {
+      monthLabel = format(weekStartDate, "MMM");
+      lastMonth = monthOfThisWeek;
+    }
 
     return { monthLabel, days };
   });
@@ -27,19 +68,27 @@ export default function YearlyHeatmap() {
   return (
     <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-50 flex flex-col h-full items-center">
       
-      {/* Header Tahun */}
       <div className="flex items-end gap-6 mb-6">
-        <span className="text-2xl font-sans text-gray-300 cursor-pointer">2025</span>
-        <span className="text-4xl font-sans text-gray-900 font-medium cursor-pointer">2026</span>
+        {[currentYear - 1, currentYear].map((year) => (
+          <span 
+            key={year}
+            onClick={() => setSelectedYear(year)}
+            className={`font-sans cursor-pointer transition-all ${
+              selectedYear === year 
+                ? "text-4xl text-gray-900 font-medium" 
+                : "text-2xl text-gray-300 hover:text-gray-400"
+            }`}
+          >
+            {year}
+          </span>
+        ))}
       </div>
 
-      {/* Teks TOTAL */}
       <div className="text-center mb-6">
         <p className="text-[10px] font-semibold text-gray-500 tracking-widest mb-1 uppercase">Total</p>
-        <p className="text-2xl font-mono text-gray-900">0h 00m</p>
+        <p className="text-2xl font-mono text-gray-900">{totalHours}h {totalMinutes}m</p>
       </div>
 
-      {/* Toolbar & Legend */}
       <div className="flex justify-between w-full max-w-[280px] mb-4 items-end">
         <div className="flex gap-2">
           <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-50 transition-colors">
@@ -66,12 +115,8 @@ export default function YearlyHeatmap() {
         </div>
       </div>
 
-      {/* Wrapper Utama Grid & Header Hari */}
       <div className="w-full max-w-[280px]">
-        
-        {/* Header Hari (Sun - Sat) */}
-        {/* pl-8 digunakan untuk memberi ruang kosong di kiri tempat label bulan berada */}
-        <div className="pl-8 mb-2">
+        <div className="pl-10 mb-2">
            <div className="grid grid-cols-7 gap-1 text-[10px] font-sans text-gray-400 text-center">
             <span className="text-red-400">Sun</span>
             <span>Mon</span>
@@ -83,21 +128,17 @@ export default function YearlyHeatmap() {
           </div>
         </div>
 
-        {/* Heatmap Vertikal */}
         <div className="flex flex-col gap-1">
           {weeks.map((week, wIdx) => (
             <div key={wIdx} className="flex items-center gap-2">
-              {/* Y-Axis: Label Bulan di kiri */}
-              <div className="w-6 text-[10px] font-sans text-gray-600 text-right">
+              <div className="w-8 text-[10px] font-sans text-gray-500 text-right font-medium">
                 {week.monthLabel}
               </div>
-              
-              {/* X-Axis: 7 Hari dalam Seminggu */}
               <div className="flex-1 grid grid-cols-7 gap-1">
-                {week.days.map((color, dIdx) => (
+                {week.days.map((colorClass, dIdx) => (
                   <div 
                     key={dIdx} 
-                    className={`w-full aspect-square rounded-[3px] ${color}`}
+                    className={`w-full aspect-square rounded-[3px] ${colorClass}`}
                   ></div>
                 ))}
               </div>
