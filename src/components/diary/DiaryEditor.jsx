@@ -9,43 +9,39 @@ export default function DiaryEditor({ date }) {
   const { records, diaries, setDiaries } = useAppContext();
   const dateStr = format(date, "yyyy-MM-dd");
 
-  // State lokal untuk form
   const [diary, setDiary] = useState({ bad: "", good: "", next: "" });
-  const [isSaved, setIsSaved] = useState(false); // Untuk indikator visual
-
-  // Sync form state jika tanggal (date) berubah
+  const [isSaved, setIsSaved] = useState(false);
   useEffect(() => {
     if (diaries[dateStr]) {
       setDiary(diaries[dateStr]);
     } else {
-      setDiary({ bad: "", good: "", next: "" }); // Reset kalau kosong
+      setDiary({ bad: "", good: "", next: "" });
     }
     setIsSaved(false);
   }, [dateStr, diaries]);
 
-  // Ambil total waktu hari itu dari records
   const dayRecordSeconds = records[dateStr]?.total || 0;
   const hours = Math.floor(dayRecordSeconds / 3600);
   const minutes = Math.floor((dayRecordSeconds % 3600) / 60);
   const dailyRecord = `${hours}h ${minutes}m`;
 
   const handleSave = () => {
-    setDiaries(prev => ({
+    setDiaries((prev) => ({
       ...prev,
-      [dateStr]: diary
+      [dateStr]: diary,
     }));
     setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2000); // Reset tulisan saved setelah 2 detik
+    setTimeout(() => setIsSaved(false), 2000);
   };
 
   const handleDelete = () => {
-     if (window.confirm("Are you sure you want to clear today's diary?")) {
-        const newDiaries = { ...diaries };
-        delete newDiaries[dateStr];
-        setDiaries(newDiaries);
-        setDiary({ bad: "", good: "", next: "" });
-     }
-  }
+    if (window.confirm("Are you sure you want to clear today's diary?")) {
+      const newDiaries = { ...diaries };
+      delete newDiaries[dateStr];
+      setDiaries(newDiaries);
+      setDiary({ bad: "", good: "", next: "" });
+    }
+  };
 
   return (
     <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-50 flex flex-col h-full">
@@ -53,11 +49,13 @@ export default function DiaryEditor({ date }) {
         <h2 className="text-lg font-semibold font-sans">
           {format(date, "MMM dd")} Reflection
         </h2>
-        
+
         <div className="flex items-center gap-2 bg-[#efedf8] text-[#5b45c2] px-3 py-1.5 rounded-xl border border-[#e5e1f1]">
           <Clock size={16} />
           <span className="text-sm font-mono font-semibold">{dailyRecord}</span>
-          <span className="text-[10px] ml-1 opacity-80 font-sans uppercase tracking-wider">recorded</span>
+          <span className="text-[10px] ml-1 opacity-80 font-sans uppercase tracking-wider">
+            recorded
+          </span>
         </div>
       </div>
 
@@ -104,13 +102,18 @@ export default function DiaryEditor({ date }) {
 
       <div className="mt-8 flex justify-between items-center">
         {diaries[dateStr] ? (
-            <button onClick={handleDelete} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
-                <Trash2 size={18} />
-            </button>
-        ) : <div></div>}
-        
-        <button 
-          onClick={handleSave} 
+          <button
+            onClick={handleDelete}
+            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+          >
+            <Trash2 size={18} />
+          </button>
+        ) : (
+          <div></div>
+        )}
+
+        <button
+          onClick={handleSave}
           className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-colors ${isSaved ? "bg-green-500 text-white" : "bg-black text-white hover:bg-gray-800"}`}
         >
           <Save size={16} />
