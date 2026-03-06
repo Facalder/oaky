@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
-import { dailyStatistics } from '@/drizzle/schemas/daily-statistics.js'
+import { dailyStatistics } from '@/drizzle/schemas/daily-statistics-schema.js'
 
 const insertDailyStatisticSchema = createInsertSchema(dailyStatistics)
 const selectDailyStatisticSchema = createSelectSchema(dailyStatistics)

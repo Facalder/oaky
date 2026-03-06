@@ -7,7 +7,11 @@
     "build": "bun --bun next build",
     "start": "bun --bun next start",
     "lint": "biome check --write",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "db:generate": "bunx drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio --port 3080"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

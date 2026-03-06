@@ -4,41 +4,69 @@ import { deleteTask, getTasksById, updateTask } from '@/modules/tasks/tasks-serv
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
 
-export async function GET(_request, { params }) {
+export async function GET(request, { params }) {
+  const url = request.url
+  const { id } = params
+
   try {
-    const { id } = params
-    const data = await getTasksById(id)
+    const data = await getTasksById(id, url)
+
     return ApiResponse.ok('Task fetched successfully', data)
   } catch (error) {
     const apiError =
-      error?.name === 'ApiError' ? error : ApiError.server('Failed to fetch task')
-    return ApiResponse.error(apiError.message, apiError.statusCode, apiError.errors)
+      error instanceof ApiError
+        ? error
+        : ApiError.server('Failed to fetch task')
+
+    return ApiResponse.error(
+      apiError.message,
+      apiError.statusCode,
+      apiError.errors
+    )
   }
 }
 
 export async function PATCH(request, { params }) {
+  const url = request.url
+  const { id } = params
+
   try {
-    const { id } = params
     const body = await request.json()
-    const data = await updateTask(id, body)
+    const data = await updateTask(id, body, url)
+
     return ApiResponse.ok('Task updated successfully', data)
   } catch (error) {
     const apiError =
-      error?.name === 'ApiError' ? error : ApiError.server('Failed to update task')
-    return ApiResponse.error(apiError.message, apiError.statusCode, apiError.errors)
+      error instanceof ApiError
+        ? error
+        : ApiError.server('Failed to update task')
+
+    return ApiResponse.error(
+      apiError.message,
+      apiError.statusCode,
+      apiError.errors
+    )
   }
 }
 
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
+  const url = request.url
+  const { id } = params
+
   try {
-    const { id } = params
-    await deleteTask(id)
+    await deleteTask(id, url)
+
     return ApiResponse.ok('Task deleted successfully')
   } catch (error) {
     const apiError =
-      error?.name === 'ApiError' ? error : ApiError.server('Failed to delete task')
-    return ApiResponse.error(apiError.message, apiError.statusCode, apiError.errors)
+      error instanceof ApiError
+        ? error
+        : ApiError.server('Failed to delete task')
+
+    return ApiResponse.error(
+      apiError.message,
+      apiError.statusCode,
+      apiError.errors
+    )
   }
 }
-
-

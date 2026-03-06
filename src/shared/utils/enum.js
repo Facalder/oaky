@@ -1,7 +1,8 @@
 import z from 'zod'
 
 export function enumToPgEnum(myEnum) {
-  return Object.values(myEnum)
+  const values = Object.values(myEnum)
+  return /** @type {[string, ...string[]]} */ (values)
 }
 
 export function enumToZod(myEnum) {
