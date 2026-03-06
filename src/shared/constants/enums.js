@@ -3,7 +3,7 @@ import { enumToPgEnum } from "../utils/enum"
 
 export const Status = {
   ACTIVE: 'active',
-  TRUE: 'true',
+  INACTIVE: 'inactive'
 }
 
 export const UserStatus = {
