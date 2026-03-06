@@ -37,6 +37,11 @@ export const BadgeConditionType = {
   DONATION_MADE: 'donation_made',
 }
 
+export const RecordSource = {
+  TIMER: 'timer',
+  MANUAL: 'manual',
+}
+
 export const StatusEnum = pgEnum('status', enumToPgEnum(Status))
 
 export const UserStatusEnum = pgEnum('user_status', enumToPgEnum(UserStatus))
@@ -49,3 +54,5 @@ export const BadgeConditionTypeEnum = pgEnum(
   'badge_condition_type',
   enumToPgEnum(BadgeConditionType),
 )
+
+export const RecordSourceEnum = pgEnum('record_source', enumToPgEnum(RecordSource))

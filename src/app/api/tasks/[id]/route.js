@@ -1,12 +1,10 @@
-'use server'
-
 import { deleteTask, getTasksById, updateTask } from '@/modules/tasks/tasks-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
 
 export async function GET(request, { params }) {
   const url = request.url
-  const { id } = params
+  const { id } = await params
 
   try {
     const data = await getTasksById(id, url)
@@ -28,7 +26,7 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request, { params }) {
   const url = request.url
-  const { id } = params
+  const { id } = await params
 
   try {
     const body = await request.json()
@@ -51,7 +49,7 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const url = request.url
-  const { id } = params
+  const { id } = await params
 
   try {
     await deleteTask(id, url)

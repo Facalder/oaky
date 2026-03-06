@@ -1,5 +1,3 @@
-'use server'
-
 import { createTask, getAllTasks } from '@/modules/tasks/tasks-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
