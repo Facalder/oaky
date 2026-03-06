@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
-import { taskRecords } from '../schemas/task-records-schema'
+import { taskRecords } from '@/drizzle/schemas/task-records-schema'
 
 const insertTaskRecordSchema = createInsertSchema(taskRecords)
 const selectTaskRecordSchema = createSelectSchema(taskRecords)
@@ -21,4 +21,3 @@ export const updateTaskRecordRequestDto = insertTaskRecordSchema
 export const taskRecordResponseDto = selectTaskRecordSchema
 
 export const taskRecordListResponseDto = z.array(taskRecordResponseDto)
-

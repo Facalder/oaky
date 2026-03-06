@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
-import { categories } from '../schemas/categories-schema'
+import { categories } from '@/drizzle/schemas/categories-schema'
 
 const insertCategorySchema = createInsertSchema(categories)
 const selectCategorySchema = createSelectSchema(categories)
@@ -20,4 +20,3 @@ export const updateCategoryRequestDto = insertCategorySchema
 export const categoryResponseDto = selectCategorySchema
 
 export const categoryListResponseDto = z.array(categoryResponseDto)
-

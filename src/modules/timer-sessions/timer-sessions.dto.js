@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
-import { timerSessions } from '../schemas/timer-sessions-schema'
+import { timerSessions } from '@/drizzle/schemas/timer-sessions-schema'
 
 const insertTimerSessionSchema = createInsertSchema(timerSessions)
 const selectTimerSessionSchema = createSelectSchema(timerSessions)
@@ -24,4 +24,3 @@ export const updateTimerSessionRequestDto = insertTimerSessionSchema
 export const timerSessionResponseDto = selectTimerSessionSchema
 
 export const timerSessionListResponseDto = z.array(timerSessionResponseDto)
-

@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
-import { tasks } from '../schemas/tasks-schema'
+import { tasks } from '@/drizzle/schemas/tasks-schema'
 
 const insertTaskSchema = createInsertSchema(tasks)
 const selectTaskSchema = createSelectSchema(tasks)

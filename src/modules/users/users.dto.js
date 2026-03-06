@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from 'zod'
-import { users } from '../schemas/users-schema'
+import { users } from '@/drizzle/schemas/users-schema'
 
 const insertUserSchema = createInsertSchema(users)
 const selectUserSchema = createSelectSchema(users)
@@ -24,4 +24,3 @@ export const updateUserRequestDto = insertUserSchema
 export const userResponseDto = selectUserSchema
 
 export const userListResponseDto = z.array(userResponseDto)
-
