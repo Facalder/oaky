@@ -23,3 +23,4 @@ export const updateDailyStatisticRequestDto = insertDailyStatisticSchema
 export const dailyStatisticResponseDto = selectDailyStatisticSchema
 
 export const dailyStatisticListResponseDto = z.array(dailyStatisticResponseDto)
+

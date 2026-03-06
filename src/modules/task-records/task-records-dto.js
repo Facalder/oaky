@@ -21,3 +21,4 @@ export const updateTaskRecordRequestDto = insertTaskRecordSchema
 export const taskRecordResponseDto = selectTaskRecordSchema
 
 export const taskRecordListResponseDto = z.array(taskRecordResponseDto)
+

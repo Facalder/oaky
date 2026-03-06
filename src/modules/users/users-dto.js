@@ -24,3 +24,4 @@ export const updateUserRequestDto = insertUserSchema
 export const userResponseDto = selectUserSchema
 
 export const userListResponseDto = z.array(userResponseDto)
+

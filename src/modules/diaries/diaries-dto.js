@@ -23,3 +23,4 @@ export const updateDiaryRequestDto = insertDiarySchema
 export const diaryResponseDto = selectDiarySchema
 
 export const diaryListResponseDto = z.array(diaryResponseDto)
+
