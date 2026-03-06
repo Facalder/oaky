@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
-import { STATUS_CODES } from "@/shared/constants/status-code";
+import { NextResponse } from 'next/server'
+import { STATUS_CODES } from '@/shared/constants/status-code'
 
 export class ApiResponse {
   constructor({ success, message, statusCode, data = null, errors }) {
-    this.success = success;
-    this.message = message;
-    this.statusCode = statusCode;
-    this.data = data;
-    this.errors = errors;
+    this.success = success
+    this.message = message
+    this.statusCode = statusCode
+    this.data = data
+    this.errors = errors
   }
 
   send() {
@@ -20,19 +20,19 @@ export class ApiResponse {
         ...(this.errors !== undefined && { errors: this.errors }),
       },
       { status: this.statusCode },
-    );
+    )
   }
 
   static Success(message, data, statusCode = STATUS_CODES.OK) {
-    return new ApiResponse({ success: true, message, data, statusCode }).send();
+    return new ApiResponse({ success: true, message, data, statusCode }).send()
   }
 
-  static ok(message = "OK", data) {
-    return ApiResponse.Success(message, data, STATUS_CODES.OK);
+  static ok(message = 'OK', data) {
+    return ApiResponse.Success(message, data, STATUS_CODES.OK)
   }
 
-  static created(message = "Created", data) {
-    return ApiResponse.Success(message, data, STATUS_CODES.CREATED);
+  static created(message = 'Created', data) {
+    return ApiResponse.Success(message, data, STATUS_CODES.CREATED)
   }
 
   static error(
@@ -45,6 +45,6 @@ export class ApiResponse {
       message,
       statusCode,
       errors,
-    }).send();
+    }).send()
   }
 }
