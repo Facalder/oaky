@@ -1,12 +1,10 @@
 // src/app/plans/page.jsx
 'use client'
-import { addDays, format, isSameDay, startOfDay, subDays } from 'date-fns'
+import { format, startOfDay, subDays } from 'date-fns'
 import {
   AlignRight,
-  Check,
   ChevronLeft,
   Eraser,
-  ListTodo,
   MoreVertical,
   Plus,
 } from 'lucide-react'
@@ -15,7 +13,7 @@ import AddRecordModal from '@/components/timer/AddRecordModal'
 import { useAppContext } from '@/context/AppContext'
 
 export default function PlansPage() {
-  const { tasks, toggleTaskCompletion, records } = useAppContext()
+  const { tasks, records } = useAppContext()
 
   // State
   const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()))
@@ -23,7 +21,6 @@ export default function PlansPage() {
 
   // Navigasi
   const handlePrevDay = () => setSelectedDate(subDays(selectedDate, 1))
-  const today = startOfDay(new Date())
 
   // Helper Total Waktu
   const formatTotalTime = (seconds) => {
@@ -148,7 +145,11 @@ export default function PlansPage() {
                     <p
                       className={`text-[12px] mt-0.5 ${isCompleted ? 'text-gray-300' : 'text-gray-400'}`}
                     >
-                      {task.repeatEveryday ? 'Everyday' : 'Mon, Wed, Fri'}
+                      {task.repeatEveryday
+                        ? 'Everyday'
+                        : task.repeatDays?.length
+                          ? task.repeatDays.join(', ')
+                          : 'Custom'}
                     </p>
                   </div>
                 </div>
@@ -182,6 +183,7 @@ export default function PlansPage() {
         <div className='flex items-center justify-between mb-8 relative'>
           <div className='flex items-center gap-4'>
             <button
+              type='button'
               onClick={handlePrevDay}
               className='p-1 hover:bg-gray-100 rounded-md transition-colors'
             >
@@ -200,12 +202,16 @@ export default function PlansPage() {
         {/* Header Action Buttons */}
         <div className='flex justify-end gap-3 mb-8'>
           <button
+            type='button'
             onClick={() => setIsRecordModalOpen(true)}
             className='flex items-center gap-1.5 bg-white px-4 py-2 rounded-full border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm text-gray-700'
           >
             To-do list <Plus size={16} />
           </button>
-          <button className='flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm text-gray-700'>
+          <button
+            type='button'
+            className='flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm text-gray-700'
+          >
             Category <AlignRight size={16} />
           </button>
         </div>
@@ -228,7 +234,10 @@ export default function PlansPage() {
 
       {/* PANEL KANAN: CALENDAR TIMELINE VIEW */}
       <div className='bg-white rounded-[32px] p-8 shadow-sm border border-gray-50 flex flex-col h-full overflow-hidden relative'>
-        <button className='absolute top-8 right-8 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border border-gray-200 transition-colors z-10 bg-white shadow-sm'>
+        <button
+          type='button'
+          className='absolute top-8 right-8 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full border border-gray-200 transition-colors z-10 bg-white shadow-sm'
+        >
           <Eraser size={18} />
         </button>
 
@@ -241,7 +250,7 @@ export default function PlansPage() {
               {planHours}h {planMins.toString().padStart(2, '0')}m
             </span>
           </div>
-          <div className='w-[1px] h-full bg-gray-100 absolute left-1/2 top-0 bottom-0'></div>
+          <div className='w-px h-full bg-gray-100 absolute left-1/2 top-0 bottom-0'></div>
           <div className='flex-1 flex flex-col items-center justify-center'>
             <span className='text-[11px] text-gray-400 font-medium tracking-widest mb-1 uppercase'>
               Record
@@ -257,7 +266,7 @@ export default function PlansPage() {
             {/* GRID LINES */}
             {hoursGrid.map((grid, index) => (
               <div
-                key={index}
+                key={grid.hour}
                 className='absolute w-full flex items-start'
                 style={{ top: `${index * 60}px` }}
               >
@@ -277,7 +286,7 @@ export default function PlansPage() {
                   </span>
                 </div>
                 <div className='flex-1 border-t-[1.5px] border-dotted border-gray-200 ml-2 relative'>
-                  <div className='absolute left-1/2 w-[1px] h-[60px] bg-gray-100 -top-[2px]'></div>
+                  <div className='absolute left-1/2 w-px h-[60px] bg-gray-100 -top-[2px]'></div>
                 </div>
               </div>
             ))}
@@ -315,33 +324,32 @@ export default function PlansPage() {
 
             {/* BLOCK RECORD (KANAN) - Solid Fill */}
             <div className='absolute left-[calc(50%+24px)] w-[calc(50%-40px)] top-0 bottom-0 pointer-events-none'>
-              {dailyRecord.sessions &&
-                dailyRecord.sessions.map((session) => {
-                  if (!session.startTime || !session.endTime) return null
-                  const top = getTopOffset(session.startTime)
-                  const height = getTopOffset(session.endTime) - top
-                  const colors = getBlockStyle(session.color)
+              {dailyRecord.sessions?.map((session) => {
+                if (!session.startTime || !session.endTime) return null
+                const top = getTopOffset(session.startTime)
+                const height = getTopOffset(session.endTime) - top
+                const colors = getBlockStyle(session.color)
 
-                  if (top < 0 || top > 720) return null
+                if (top < 0 || top > 720) return null
 
-                  return (
-                    <div
-                      key={`rec-${session.id}`}
-                      className='absolute rounded-[10px] p-3 overflow-hidden flex items-start shadow-sm z-10'
-                      style={{
-                        top: `${top}px`,
-                        height: `${height}px`,
-                        width: '100%',
-                        backgroundColor: colors.solid,
-                        border: 'none',
-                      }}
-                    >
-                      <span className='text-[13px] font-medium text-gray-900 leading-tight mix-blend-color-burn'>
-                        {session.title}
-                      </span>
-                    </div>
-                  )
-                })}
+                return (
+                  <div
+                    key={`rec-${session.id}`}
+                    className='absolute rounded-[10px] p-3 overflow-hidden flex items-start shadow-sm z-10'
+                    style={{
+                      top: `${top}px`,
+                      height: `${height}px`,
+                      width: '100%',
+                      backgroundColor: colors.solid,
+                      border: 'none',
+                    }}
+                  >
+                    <span className='text-[13px] font-medium text-gray-900 leading-tight mix-blend-color-burn'>
+                      {session.title}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>

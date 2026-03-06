@@ -10,7 +10,7 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 320 }).notNull().unique(),
   password: text('password').notNull(),
 
-  status: UserStatusEnum().default('active'),
+  status: UserStatusEnum('status').notNull().default('active'),
 
   ...globalTimestamps,
 })

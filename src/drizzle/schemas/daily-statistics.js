@@ -1,14 +1,25 @@
-import { date, integer, pgTable, uuid } from 'drizzle-orm/pg-core'
+import { date, integer, pgTable, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 import { globalId, globalTimestamps } from '../global'
 
-export const dailyStatistics = pgTable('daily_statistics', {
-  ...globalId,
-  userId: uuid('user_id').notNull(),
+export const dailyStatistics = pgTable(
+  'daily_statistics',
+  {
+    ...globalId,
+    userId: uuid('user_id').notNull(),
 
-  statDate: date('state_date').defaultNow(),
-  totalFocusMin: integer('total_focus_min').default(0),
-  totalSessions: integer('total_sessions').default(0),
-  tasksCompleted: integer('total_tasks_Completed').default(0),
+    statDate: date('stat_date').notNull().defaultNow(),
 
-  ...globalTimestamps,
-})
+    // mengikuti `records[date].total` (detik)
+    totalSec: integer('total_sec').notNull().default(0),
+    totalSessions: integer('total_sessions').notNull().default(0),
+    tasksCompleted: integer('tasks_completed').notNull().default(0),
+
+    ...globalTimestamps,
+  },
+  (t) => ({
+    userDateUnique: uniqueIndex('daily_statistics_user_date_unique').on(
+      t.userId,
+      t.statDate,
+    ),
+  }),
+)

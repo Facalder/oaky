@@ -1,6 +1,12 @@
 'use client'
 import { format } from 'date-fns'
-import { createContext, useContext, useEffect, useState } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react'
 
 export const AppContext = createContext()
 
@@ -31,6 +37,25 @@ export const AppProvider = ({ children }) => {
 
   // 1. INITIAL LOAD DARI LOCALSTORAGE
   useEffect(() => {
+    const normalizeTask = (task) => {
+      const repeatEveryday =
+        task.repeatEveryday ??
+        task.isEveryday ??
+        (Array.isArray(task.repeatDays) ? task.repeatDays.length === 0 : true)
+
+      return {
+        id: task.id,
+        title: task.title ?? '',
+        category: task.category ?? 'Daily',
+        color: task.color ?? 'bg-purple-600',
+        startAt: task.startAt ?? '05:00',
+        endAt: task.endAt ?? '06:00',
+        repeatEveryday,
+        repeatDays: Array.isArray(task.repeatDays) ? task.repeatDays : [],
+        isCompleted: task.isCompleted ?? false,
+      }
+    }
+
     // Berikan default value (array dummy awal) jika localStorage masih kosong
     const defaultTasks = [
       {
@@ -38,12 +63,22 @@ export const AppProvider = ({ children }) => {
         title: 'Weight Training',
         category: 'Exercise',
         color: 'bg-[#5b45c2]',
+        startAt: '05:00',
+        endAt: '06:00',
+        repeatEveryday: true,
+        repeatDays: [],
+        isCompleted: false,
       },
       {
         id: 2,
         title: 'Reading every day',
         category: 'Daily',
         color: 'bg-green-400',
+        startAt: '05:00',
+        endAt: '06:00',
+        repeatEveryday: true,
+        repeatDays: [],
+        isCompleted: false,
       },
     ]
 
@@ -53,13 +88,14 @@ export const AppProvider = ({ children }) => {
     const savedRecords = JSON.parse(localStorage.getItem('dote_records')) || {}
     const savedDiaries = JSON.parse(localStorage.getItem('dote_diaries')) || {}
 
-    setTasks(savedTasks)
+    const normalizedTasks = (savedTasks || []).map(normalizeTask)
+    setTasks(normalizedTasks)
     setEvents(savedEvents)
     setRecords(savedRecords)
     setDiaries(savedDiaries)
 
-    if (savedTasks.length > 0) {
-      setActiveTask(savedTasks[0])
+    if (normalizedTasks.length > 0) {
+      setActiveTask(normalizedTasks[0])
     }
 
     setIsMounted(true)
@@ -74,6 +110,65 @@ export const AppProvider = ({ children }) => {
       localStorage.setItem('dote_diaries', JSON.stringify(diaries))
     }
   }, [tasks, events, records, diaries, isMounted])
+
+  // 4. FUNGSI PAUSE DAN SIMPAN DURASI
+  const handlePause = useCallback(
+    (timeToSave = time) => {
+      setIsRunning(false)
+      if (timeToSave === 0) return
+
+      const todayStr = format(new Date(), 'yyyy-MM-dd')
+
+      // Kalkulasi Start Time dan End Time dari sesi yang baru berjalan
+      const end = new Date()
+      const start = new Date(end.getTime() - timeToSave * 1000)
+
+      const startTimeStr = format(start, 'HH:mm')
+      const endTimeStr = format(end, 'HH:mm')
+
+      setRecords((prev) => {
+        const todayRecord = prev[todayStr] || {
+          total: 0,
+          tasks: {},
+          sessions: [],
+        }
+        const taskTotal = todayRecord.tasks[activeTask.id] || 0
+
+        const isValidWork =
+          activeMode === 'stopwatch' || pomodoroSession === 'focus'
+        const addTime = isValidWork ? timeToSave : 0
+
+        // Buat sesi baru
+        const newSession = {
+          id: Date.now(),
+          taskId: activeTask.id,
+          title: activeTask.title,
+          color: activeTask.color,
+          startTime: startTimeStr,
+          endTime: endTimeStr,
+          duration: timeToSave,
+        }
+
+        return {
+          ...prev,
+          [todayStr]: {
+            total: todayRecord.total + addTime,
+            tasks: {
+              ...todayRecord.tasks,
+              [activeTask.id]: taskTotal + addTime,
+            },
+            // Masukkan sesi ke dalam array jika itu adalah waktu kerja valid
+            sessions: isValidWork
+              ? [...(todayRecord.sessions || []), newSession]
+              : todayRecord.sessions || [],
+          },
+        }
+      })
+
+      if (activeMode === 'stopwatch') setTime(0)
+    },
+    [activeMode, activeTask, pomodoroSession, time],
+  )
 
   // 3. ENGINE TIMER UTAMA
   useEffect(() => {
@@ -96,64 +191,7 @@ export const AppProvider = ({ children }) => {
       }, 1000)
     }
     return () => clearInterval(interval)
-  }, [isRunning, activeMode, pomodoroSession])
-
-  // 4. FUNGSI PAUSE DAN SIMPAN DURASI
-  // Di dalam AppContext.jsx, ganti fungsi handlePause:
-  const handlePause = (timeToSave = time) => {
-    setIsRunning(false)
-    if (timeToSave === 0) return
-
-    const todayStr = format(new Date(), 'yyyy-MM-dd')
-
-    // Kalkulasi Start Time dan End Time dari sesi yang baru berjalan
-    const end = new Date()
-    const start = new Date(end.getTime() - timeToSave * 1000)
-
-    const startTimeStr = format(start, 'HH:mm')
-    const endTimeStr = format(end, 'HH:mm')
-
-    setRecords((prev) => {
-      const todayRecord = prev[todayStr] || {
-        total: 0,
-        tasks: {},
-        sessions: [],
-      }
-      const taskTotal = todayRecord.tasks[activeTask.id] || 0
-
-      const isValidWork =
-        activeMode === 'stopwatch' || pomodoroSession === 'focus'
-      const addTime = isValidWork ? timeToSave : 0
-
-      // Buat sesi baru
-      const newSession = {
-        id: Date.now(),
-        taskId: activeTask.id,
-        title: activeTask.title,
-        color: activeTask.color,
-        startTime: startTimeStr,
-        endTime: endTimeStr,
-        duration: timeToSave,
-      }
-
-      return {
-        ...prev,
-        [todayStr]: {
-          total: todayRecord.total + addTime,
-          tasks: {
-            ...todayRecord.tasks,
-            [activeTask.id]: taskTotal + addTime,
-          },
-          // Masukkan sesi ke dalam array jika itu adalah waktu kerja valid
-          sessions: isValidWork
-            ? [...(todayRecord.sessions || []), newSession]
-            : todayRecord.sessions || [],
-        },
-      }
-    })
-
-    if (activeMode === 'stopwatch') setTime(0)
-  }
+  }, [isRunning, activeMode, pomodoroSession, handlePause])
 
   const toggleTimer = () => {
     if (isRunning) {

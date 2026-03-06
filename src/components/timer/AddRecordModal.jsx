@@ -1,20 +1,24 @@
 'use client'
 import { format } from 'date-fns'
-import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronRight } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useAppContext } from '@/context/AppContext'
 
 export default function AddRecordModal({ isOpen, onClose, selectedDate }) {
-  const { tasks, records, setRecords } = useAppContext()
+  const { tasks, setRecords } = useAppContext()
 
   // State untuk form manual record
-  const [selectedTaskId, setSelectedTaskId] = useState(
-    tasks.length > 0 ? tasks[0].id : null,
-  )
+  const [selectedTaskId, setSelectedTaskId] = useState(null)
   const [startTime, setStartTime] = useState('05:00')
   const [endTime, setEndTime] = useState('06:00')
+
+  useEffect(() => {
+    if (!isOpen) return
+    if (selectedTaskId == null && tasks.length > 0) {
+      setSelectedTaskId(tasks[0].id)
+    }
+  }, [isOpen, selectedTaskId, tasks])
 
   const activeTask = tasks.find((t) => t.id === selectedTaskId)
 
@@ -100,12 +104,14 @@ export default function AddRecordModal({ isOpen, onClose, selectedDate }) {
         {/* Action Buttons (Dark Mode Bottom) */}
         <div className='grid grid-cols-2 bg-[#1c1c1e]'>
           <button
+            type='button'
             onClick={onClose}
             className='py-5 font-medium text-gray-400 hover:text-white transition-colors border-r border-gray-700/50'
           >
             Cancel
           </button>
           <button
+            type='button'
             onClick={handleSave}
             className='py-5 font-medium text-white hover:bg-[#2c2c2e] transition-colors rounded-br-3xl'
           >

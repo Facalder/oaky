@@ -1,13 +1,25 @@
-import { text } from 'drizzle-orm/gel-core'
-import { pgTable } from 'drizzle-orm/pg-core'
+import { date, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 import { globalId, globalTimestamps } from '../global'
 
-export const diaries = pgTable('diaries', {
-  ...globalId,
+export const diaries = pgTable(
+  'diaries',
+  {
+    ...globalId,
 
-  badNote: text('bad_note'),
-  goodNote: text('good_note'),
-  nextNote: text('next_note'),
+    userId: uuid('user_id').notNull(),
+    diaryDate: date('diary_date').notNull(),
 
-  ...globalTimestamps,
-})
+    // Sesuai AppContext: { bad, good, next }
+    bad: text('bad'),
+    good: text('good'),
+    next: text('next'),
+
+    ...globalTimestamps,
+  },
+  (t) => ({
+    userDateUnique: uniqueIndex('diaries_user_date_unique').on(
+      t.userId,
+      t.diaryDate,
+    ),
+  }),
+)

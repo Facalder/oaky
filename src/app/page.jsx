@@ -63,7 +63,11 @@ export default function Home() {
                             <p
                               className={`text-[10px] mt-0.5 ${isCompleted ? 'text-gray-300' : 'text-gray-400'}`}
                             >
-                              {task.repeatEveryday ? 'Everyday' : 'Tue, Thu'}
+                              {task.repeatEveryday
+                                ? 'Everyday'
+                                : task.repeatDays?.length
+                                  ? task.repeatDays.join(', ')
+                                  : 'Custom'}
                             </p>
                           </div>
                         </div>
@@ -73,7 +77,9 @@ export default function Home() {
                             0h 0m
                           </span>
 
-                          <div
+                          <button
+                            type='button'
+                            aria-label='Toggle task completion'
                             onClick={() => toggleTaskCompletion(task.id)}
                             className={`w-5 h-5 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
                               isCompleted
@@ -88,9 +94,10 @@ export default function Home() {
                                 strokeWidth={3}
                               />
                             )}
-                          </div>
+                          </button>
 
                           <button
+                            type='button'
                             onClick={() => setActiveTask(task)}
                             className='bg-[#5b45c2] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#4a37a0] transition-colors'
                           >
