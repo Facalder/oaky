@@ -34,4 +34,3 @@ export const updateTaskRequestDto = insertTaskSchema
 export const taskResponseDto = selectTaskSchema
 
 export const taskListResponseDto = z.array(taskResponseDto)
-

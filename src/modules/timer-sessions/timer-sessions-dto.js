@@ -24,4 +24,3 @@ export const updateTimerSessionRequestDto = insertTimerSessionSchema
 export const timerSessionResponseDto = selectTimerSessionSchema
 
 export const timerSessionListResponseDto = z.array(timerSessionResponseDto)
-

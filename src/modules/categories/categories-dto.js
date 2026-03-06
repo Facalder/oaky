@@ -20,4 +20,3 @@ export const updateCategoryRequestDto = insertCategorySchema
 export const categoryResponseDto = selectCategorySchema
 
 export const categoryListResponseDto = z.array(categoryResponseDto)
-

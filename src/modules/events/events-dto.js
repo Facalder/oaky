@@ -25,4 +25,3 @@ export const updateEventRequestDto = insertEventSchema
 export const eventResponseDto = selectEventSchema
 
 export const eventListResponseDto = z.array(eventResponseDto)
-
