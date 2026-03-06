@@ -27,6 +27,14 @@
       "react": "recommended"
     }
   },
+  "javascript": {
+    "formatter": {
+      "bracketSpacing": true,
+      "semicolons": "asNeeded",
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "single"
+    }
+  },
   "assist": {
     "actions": {
       "source": {
