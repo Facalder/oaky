@@ -3,8 +3,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/drizzle'
 import { dailyStatistics } from '@/drizzle/schemas/daily-statistics.js'
-import { STATUS_CODES } from '@/shared/constants/status-code'
-import { ApiResponse } from '@/shared/utils/api-response'
+import { ApiError } from '@/shared/errors/api-error'
 import { logger } from '@/shared/utils/logger'
 import {
   createDailyStatisticRequestDto,
@@ -27,14 +26,16 @@ export async function getAllDailyStatistics() {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Daily statistics fetched successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'dailyStatistics:getAll',
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to fetch daily statistics')
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to fetch daily statistics')
   }
 }
 
@@ -51,10 +52,7 @@ export async function getDailyStatisticsById(id) {
     const row = rows[0]
 
     if (!row) {
-      return ApiResponse.error(
-        'Daily statistic not found',
-        STATUS_CODES.NOT_FOUND,
-      )
+      throw ApiError.notFound('Daily statistic not found')
     }
 
     const data = dailyStatisticResponseDto.parse(row)
@@ -65,7 +63,7 @@ export async function getDailyStatisticsById(id) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Daily statistic fetched successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'dailyStatistics:getById',
@@ -73,7 +71,10 @@ export async function getDailyStatisticsById(id) {
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to fetch daily statistic')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to fetch daily statistic')
   }
 }
 
@@ -96,23 +97,17 @@ export async function createDailyStatistic(payload) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.created('Daily statistic created successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'dailyStatistics:create',
       error,
       durationMs: Date.now() - startTime,
     })
-
-    if (error?.name === 'ZodError') {
-      return ApiResponse.error(
-        'Validation failed',
-        STATUS_CODES.BAD_REQUEST,
-        error.errors,
-      )
-    }
-
-    return ApiResponse.error('Failed to create daily statistic')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to create daily statistic')
   }
 }
 
@@ -129,10 +124,7 @@ export async function updateDailyStatistic(id, payload) {
       .returning()
 
     if (!updated) {
-      return ApiResponse.error(
-        'Daily statistic not found',
-        STATUS_CODES.NOT_FOUND,
-      )
+      throw ApiError.notFound('Daily statistic not found')
     }
 
     const data = dailyStatisticResponseDto.parse(updated)
@@ -143,7 +135,7 @@ export async function updateDailyStatistic(id, payload) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Daily statistic updated successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'dailyStatistics:update',
@@ -151,16 +143,10 @@ export async function updateDailyStatistic(id, payload) {
       error,
       durationMs: Date.now() - startTime,
     })
-
-    if (error?.name === 'ZodError') {
-      return ApiResponse.error(
-        'Validation failed',
-        STATUS_CODES.BAD_REQUEST,
-        error.errors,
-      )
-    }
-
-    return ApiResponse.error('Failed to update daily statistic')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to update daily statistic')
   }
 }
 
@@ -174,10 +160,7 @@ export async function deleteDailyStatistic(id) {
       .returning()
 
     if (!deleted) {
-      return ApiResponse.error(
-        'Daily statistic not found',
-        STATUS_CODES.NOT_FOUND,
-      )
+      throw ApiError.notFound('Daily statistic not found')
     }
 
     logger.info({
@@ -186,7 +169,7 @@ export async function deleteDailyStatistic(id) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Daily statistic deleted successfully')
+    return deleted
   } catch (error) {
     logger.error({
       action: 'dailyStatistics:delete',
@@ -194,6 +177,9 @@ export async function deleteDailyStatistic(id) {
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to delete daily statistic')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to delete daily statistic')
   }
 }

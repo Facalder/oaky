@@ -3,8 +3,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/drizzle'
 import { users } from '@/drizzle/schemas/users-schema'
-import { STATUS_CODES } from '@/shared/constants/status-code'
-import { ApiResponse } from '@/shared/utils/api-response'
+import { ApiError } from '@/shared/errors/api-error'
 import { logger } from '@/shared/utils/logger'
 import {
   createUserRequestDto,
@@ -26,14 +25,16 @@ export async function getAllUsers() {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Users fetched successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'users:getAll',
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to fetch users')
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to fetch users')
   }
 }
 
@@ -45,7 +46,7 @@ export async function getUsersById(id) {
     const row = rows[0]
 
     if (!row) {
-      return ApiResponse.error('User not found', STATUS_CODES.NOT_FOUND)
+      throw ApiError.notFound('User not found')
     }
 
     const data = userResponseDto.parse(row)
@@ -56,7 +57,7 @@ export async function getUsersById(id) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('User fetched successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'users:getById',
@@ -64,7 +65,10 @@ export async function getUsersById(id) {
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to fetch user')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to fetch user')
   }
 }
 
@@ -83,23 +87,17 @@ export async function createUser(payload) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.created('User created successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'users:create',
       error,
       durationMs: Date.now() - startTime,
     })
-
-    if (error?.name === 'ZodError') {
-      return ApiResponse.error(
-        'Validation failed',
-        STATUS_CODES.BAD_REQUEST,
-        error.errors,
-      )
-    }
-
-    return ApiResponse.error('Failed to create user')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to create user')
   }
 }
 
@@ -116,7 +114,7 @@ export async function updateUser(id, payload) {
       .returning()
 
     if (!updated) {
-      return ApiResponse.error('User not found', STATUS_CODES.NOT_FOUND)
+      throw ApiError.notFound('User not found')
     }
 
     const data = userResponseDto.parse(updated)
@@ -127,7 +125,7 @@ export async function updateUser(id, payload) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('User updated successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'users:update',
@@ -135,16 +133,10 @@ export async function updateUser(id, payload) {
       error,
       durationMs: Date.now() - startTime,
     })
-
-    if (error?.name === 'ZodError') {
-      return ApiResponse.error(
-        'Validation failed',
-        STATUS_CODES.BAD_REQUEST,
-        error.errors,
-      )
-    }
-
-    return ApiResponse.error('Failed to update user')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to update user')
   }
 }
 
@@ -155,7 +147,7 @@ export async function deleteUser(id) {
     const [deleted] = await db.delete(users).where(eq(users.id, id)).returning()
 
     if (!deleted) {
-      return ApiResponse.error('User not found', STATUS_CODES.NOT_FOUND)
+      throw ApiError.notFound('User not found')
     }
 
     logger.info({
@@ -164,7 +156,7 @@ export async function deleteUser(id) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('User deleted successfully')
+    return deleted
   } catch (error) {
     logger.error({
       action: 'users:delete',
@@ -172,6 +164,9 @@ export async function deleteUser(id) {
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to delete user')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to delete user')
   }
 }

@@ -3,8 +3,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/drizzle'
 import { diaries } from '@/drizzle/schemas/diaries-schema'
-import { STATUS_CODES } from '@/shared/constants/status-code'
-import { ApiResponse } from '@/shared/utils/api-response'
+import { ApiError } from '@/shared/errors/api-error'
 import { logger } from '@/shared/utils/logger'
 import {
   createDiaryRequestDto,
@@ -27,14 +26,16 @@ export async function getAllDiaries() {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Diaries fetched successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'diaries:getAll',
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to fetch diaries')
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to fetch diaries')
   }
 }
 
@@ -51,7 +52,7 @@ export async function getDiariesById(id) {
     const row = rows[0]
 
     if (!row) {
-      return ApiResponse.error('Diary not found', STATUS_CODES.NOT_FOUND)
+      throw ApiError.notFound('Diary not found')
     }
 
     const data = diaryResponseDto.parse(row)
@@ -62,7 +63,7 @@ export async function getDiariesById(id) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Diary fetched successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'diaries:getById',
@@ -70,7 +71,10 @@ export async function getDiariesById(id) {
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to fetch diary')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to fetch diary')
   }
 }
 
@@ -90,23 +94,17 @@ export async function createDiary(payload) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.created('Diary created successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'diaries:create',
       error,
       durationMs: Date.now() - startTime,
     })
-
-    if (error?.name === 'ZodError') {
-      return ApiResponse.error(
-        'Validation failed',
-        STATUS_CODES.BAD_REQUEST,
-        error.errors,
-      )
-    }
-
-    return ApiResponse.error('Failed to create diary')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to create diary')
   }
 }
 
@@ -123,7 +121,7 @@ export async function updateDiary(id, payload) {
       .returning()
 
     if (!updated) {
-      return ApiResponse.error('Diary not found', STATUS_CODES.NOT_FOUND)
+      throw ApiError.notFound('Diary not found')
     }
 
     const data = diaryResponseDto.parse(updated)
@@ -134,7 +132,7 @@ export async function updateDiary(id, payload) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Diary updated successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'diaries:update',
@@ -142,16 +140,10 @@ export async function updateDiary(id, payload) {
       error,
       durationMs: Date.now() - startTime,
     })
-
-    if (error?.name === 'ZodError') {
-      return ApiResponse.error(
-        'Validation failed',
-        STATUS_CODES.BAD_REQUEST,
-        error.errors,
-      )
-    }
-
-    return ApiResponse.error('Failed to update diary')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to update diary')
   }
 }
 
@@ -165,7 +157,7 @@ export async function deleteDiary(id) {
       .returning()
 
     if (!deleted) {
-      return ApiResponse.error('Diary not found', STATUS_CODES.NOT_FOUND)
+      throw ApiError.notFound('Diary not found')
     }
 
     logger.info({
@@ -174,7 +166,7 @@ export async function deleteDiary(id) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Diary deleted successfully')
+    return deleted
   } catch (error) {
     logger.error({
       action: 'diaries:delete',
@@ -182,6 +174,9 @@ export async function deleteDiary(id) {
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to delete diary')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to delete diary')
   }
 }

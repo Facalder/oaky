@@ -3,8 +3,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/drizzle'
 import { categories } from '@/drizzle/schemas/categories-schema'
-import { STATUS_CODES } from '@/shared/constants/status-code'
-import { ApiResponse } from '@/shared/utils/api-response'
+import { ApiError } from '@/shared/errors/api-error'
 import { logger } from '@/shared/utils/logger'
 import {
   categoryListResponseDto,
@@ -27,14 +26,16 @@ export async function getAllCategories() {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Categories fetched successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'categories:getAll',
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to fetch categories')
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to fetch categories')
   }
 }
 
@@ -51,7 +52,7 @@ export async function getCategoriesById(id) {
     const row = rows[0]
 
     if (!row) {
-      return ApiResponse.error('Category not found', STATUS_CODES.NOT_FOUND)
+      throw ApiError.notFound('Category not found')
     }
 
     const data = categoryResponseDto.parse(row)
@@ -62,7 +63,7 @@ export async function getCategoriesById(id) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Category fetched successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'categories:getById',
@@ -70,7 +71,10 @@ export async function getCategoriesById(id) {
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to fetch category')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to fetch category')
   }
 }
 
@@ -90,23 +94,17 @@ export async function createCategory(payload) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.created('Category created successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'categories:create',
       error,
       durationMs: Date.now() - startTime,
     })
-
-    if (error?.name === 'ZodError') {
-      return ApiResponse.error(
-        'Validation failed',
-        STATUS_CODES.BAD_REQUEST,
-        error.errors,
-      )
-    }
-
-    return ApiResponse.error('Failed to create category')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to create category')
   }
 }
 
@@ -123,7 +121,7 @@ export async function updateCategory(id, payload) {
       .returning()
 
     if (!updated) {
-      return ApiResponse.error('Category not found', STATUS_CODES.NOT_FOUND)
+      throw ApiError.notFound('Category not found')
     }
 
     const data = categoryResponseDto.parse(updated)
@@ -134,7 +132,7 @@ export async function updateCategory(id, payload) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Category updated successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'categories:update',
@@ -142,16 +140,10 @@ export async function updateCategory(id, payload) {
       error,
       durationMs: Date.now() - startTime,
     })
-
-    if (error?.name === 'ZodError') {
-      return ApiResponse.error(
-        'Validation failed',
-        STATUS_CODES.BAD_REQUEST,
-        error.errors,
-      )
-    }
-
-    return ApiResponse.error('Failed to update category')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to update category')
   }
 }
 
@@ -165,7 +157,7 @@ export async function deleteCategory(id) {
       .returning()
 
     if (!deleted) {
-      return ApiResponse.error('Category not found', STATUS_CODES.NOT_FOUND)
+      throw ApiError.notFound('Category not found')
     }
 
     logger.info({
@@ -174,7 +166,7 @@ export async function deleteCategory(id) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Category deleted successfully')
+    return deleted
   } catch (error) {
     logger.error({
       action: 'categories:delete',
@@ -182,6 +174,9 @@ export async function deleteCategory(id) {
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to delete category')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to delete category')
   }
 }

@@ -3,8 +3,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/drizzle'
 import { events } from '@/drizzle/schemas/events-schema'
-import { STATUS_CODES } from '@/shared/constants/status-code'
-import { ApiResponse } from '@/shared/utils/api-response'
+import { ApiError } from '@/shared/errors/api-error'
 import { logger } from '@/shared/utils/logger'
 import {
   createEventRequestDto,
@@ -27,14 +26,16 @@ export async function getAllEvents() {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Events fetched successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'events:getAll',
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to fetch events')
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to fetch events')
   }
 }
 
@@ -51,7 +52,7 @@ export async function getEventsById(id) {
     const row = rows[0]
 
     if (!row) {
-      return ApiResponse.error('Event not found', STATUS_CODES.NOT_FOUND)
+      throw ApiError.notFound('Event not found')
     }
 
     const data = eventResponseDto.parse(row)
@@ -62,7 +63,7 @@ export async function getEventsById(id) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Event fetched successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'events:getById',
@@ -70,7 +71,10 @@ export async function getEventsById(id) {
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to fetch event')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to fetch event')
   }
 }
 
@@ -90,23 +94,17 @@ export async function createEvent(payload) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.created('Event created successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'events:create',
       error,
       durationMs: Date.now() - startTime,
     })
-
-    if (error?.name === 'ZodError') {
-      return ApiResponse.error(
-        'Validation failed',
-        STATUS_CODES.BAD_REQUEST,
-        error.errors,
-      )
-    }
-
-    return ApiResponse.error('Failed to create event')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to create event')
   }
 }
 
@@ -123,7 +121,7 @@ export async function updateEvent(id, payload) {
       .returning()
 
     if (!updated) {
-      return ApiResponse.error('Event not found', STATUS_CODES.NOT_FOUND)
+      throw ApiError.notFound('Event not found')
     }
 
     const data = eventResponseDto.parse(updated)
@@ -134,7 +132,7 @@ export async function updateEvent(id, payload) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Event updated successfully', data)
+    return data
   } catch (error) {
     logger.error({
       action: 'events:update',
@@ -142,16 +140,10 @@ export async function updateEvent(id, payload) {
       error,
       durationMs: Date.now() - startTime,
     })
-
-    if (error?.name === 'ZodError') {
-      return ApiResponse.error(
-        'Validation failed',
-        STATUS_CODES.BAD_REQUEST,
-        error.errors,
-      )
-    }
-
-    return ApiResponse.error('Failed to update event')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to update event')
   }
 }
 
@@ -165,7 +157,7 @@ export async function deleteEvent(id) {
       .returning()
 
     if (!deleted) {
-      return ApiResponse.error('Event not found', STATUS_CODES.NOT_FOUND)
+      throw ApiError.notFound('Event not found')
     }
 
     logger.info({
@@ -174,7 +166,7 @@ export async function deleteEvent(id) {
       durationMs: Date.now() - startTime,
     })
 
-    return ApiResponse.ok('Event deleted successfully')
+    return deleted
   } catch (error) {
     logger.error({
       action: 'events:delete',
@@ -182,6 +174,9 @@ export async function deleteEvent(id) {
       error,
       durationMs: Date.now() - startTime,
     })
-    return ApiResponse.error('Failed to delete event')
+    if (error?.name === 'ApiError') throw error
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to delete event')
   }
 }
