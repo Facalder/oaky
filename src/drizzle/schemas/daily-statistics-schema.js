@@ -68,10 +68,13 @@ export const dailyStatistics = pgTable(
   ],
 )
 
-export const dailyStatisticsRelations = relations(dailyStatistics, ({ one, many }) => ({
-  user: one(users, {
-    fields: [dailyStatistics.userId],
-    references: [users.id],
+export const dailyStatisticsRelations = relations(
+  dailyStatistics,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [dailyStatistics.userId],
+      references: [users.id],
+    }),
+    taskRecords: many(taskRecords),
   }),
-  taskRecords: many(taskRecords),
-}))
+)

@@ -4,14 +4,14 @@ import { result } from '@/shared/config/env'
 
 const { combine, timestamp, printf, colorize, errors, splat } = winston.format
 
-const logFormat = printf(({ level, message, timestamp, stack, ...metadata }) => {
-  const metaStr =
-    Object.keys(metadata).length > 0
-      ? ` | ${JSON.stringify(metadata)}`
-      : ''
+const logFormat = printf(
+  ({ level, message, timestamp, stack, ...metadata }) => {
+    const metaStr =
+      Object.keys(metadata).length > 0 ? ` | ${JSON.stringify(metadata)}` : ''
 
-  return `${timestamp} [${level}] : ${stack || message}${metaStr}`
-})
+    return `${timestamp} [${level}] : ${stack || message}${metaStr}`
+  },
+)
 
 const transports = []
 

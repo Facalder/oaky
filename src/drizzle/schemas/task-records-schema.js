@@ -52,10 +52,9 @@ export const taskRecords = pgTable(
     ),
 
     // FK ke dailyStatistics untuk memudahkan aggregate query dari sisi statistics.
-    dailyStatId: uuid('daily_stat_id').references(
-      () => dailyStatistics.id,
-      { onDelete: 'set null' },
-    ),
+    dailyStatId: uuid('daily_stat_id').references(() => dailyStatistics.id, {
+      onDelete: 'set null',
+    }),
 
     recordDate: date('record_date').notNull(),
 

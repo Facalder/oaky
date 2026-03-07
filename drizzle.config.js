@@ -1,6 +1,6 @@
-import { result } from '@/shared/config/env';
-import 'dotenv/config';
-import { defineConfig } from 'drizzle-kit';
+import { result } from '@/shared/config/env'
+import 'dotenv/config'
+import { defineConfig } from 'drizzle-kit'
 
 export default defineConfig({
   out: './src/drizzle/migrations',
@@ -9,7 +9,7 @@ export default defineConfig({
   dbCredentials: {
     url: result.data?.DATABASE_URL || '',
   },
-  verbose: true, 
+  verbose: true,
   strict: true,
-  casing: 'snake_case'
-});
+  casing: 'snake_case',
+})

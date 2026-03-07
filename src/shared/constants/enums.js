@@ -55,4 +55,7 @@ export const BadgeConditionTypeEnum = pgEnum(
   enumToPgEnum(BadgeConditionType),
 )
 
-export const RecordSourceEnum = pgEnum('record_source', enumToPgEnum(RecordSource))
+export const RecordSourceEnum = pgEnum(
+  'record_source',
+  enumToPgEnum(RecordSource),
+)

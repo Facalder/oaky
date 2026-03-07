@@ -1,8 +1,8 @@
 import {
-  deleteTask,
-  getTasksById,
-  updateTask,
-} from '@/modules/tasks/tasks-service'
+  deleteCategory,
+  getCategoriesById,
+  updateCategory,
+} from '@/modules/categories/categories-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
 
@@ -11,14 +11,13 @@ export async function GET(request, { params }) {
   const { id } = await params
 
   try {
-    const data = await getTasksById(id, url)
-
-    return ApiResponse.ok('Task fetched successfully', data)
+    const data = await getCategoriesById(id, url)
+    return ApiResponse.ok('Category fetched successfully', data)
   } catch (error) {
     const apiError =
       error instanceof ApiError
         ? error
-        : ApiError.server('Failed to fetch task')
+        : ApiError.server('Failed to fetch category')
 
     return ApiResponse.error(
       apiError.message,
@@ -33,15 +32,14 @@ export async function PATCH(request, { params }) {
   const { id } = await params
 
   try {
-    const body = await request.json()
-    const data = await updateTask(id, body, url)
-
-    return ApiResponse.ok('Task updated successfully', data)
+    const payload = await request.json()
+    const data = await updateCategory(id, payload, url)
+    return ApiResponse.ok('Category updated successfully', data)
   } catch (error) {
     const apiError =
       error instanceof ApiError
         ? error
-        : ApiError.server('Failed to update task')
+        : ApiError.server('Failed to update category')
 
     return ApiResponse.error(
       apiError.message,
@@ -56,14 +54,13 @@ export async function DELETE(request, { params }) {
   const { id } = await params
 
   try {
-    await deleteTask(id, url)
-
-    return ApiResponse.ok('Task deleted successfully')
+    await deleteCategory(id, url)
+    return ApiResponse.ok('Category deleted successfully')
   } catch (error) {
     const apiError =
       error instanceof ApiError
         ? error
-        : ApiError.server('Failed to delete task')
+        : ApiError.server('Failed to delete category')
 
     return ApiResponse.error(
       apiError.message,

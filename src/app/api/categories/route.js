@@ -1,4 +1,7 @@
-import { createTask, getAllTasks } from '@/modules/tasks/tasks-service'
+import {
+  createCategory,
+  getAllCategories,
+} from '@/modules/categories/categories-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
 
@@ -6,14 +9,13 @@ export async function GET(request) {
   const url = request.url
 
   try {
-    const data = await getAllTasks(url)
-
-    return ApiResponse.ok('Tasks fetched successfully', data)
+    const data = await getAllCategories(url)
+    return ApiResponse.ok('Categories fetched successfully', data)
   } catch (error) {
     const apiError =
       error instanceof ApiError
         ? error
-        : ApiError.server('Failed to fetch tasks')
+        : ApiError.server('Failed to fetch categories')
 
     return ApiResponse.error(
       apiError.message,
@@ -27,15 +29,14 @@ export async function POST(request) {
   const url = request.url
 
   try {
-    const body = await request.json()
-    const data = await createTask(body, url)
-
-    return ApiResponse.created('Task created successfully', data)
+    const payload = await request.json()
+    const data = await createCategory(payload, url)
+    return ApiResponse.created('Category created successfully', data)
   } catch (error) {
     const apiError =
       error instanceof ApiError
         ? error
-        : ApiError.server('Failed to create task')
+        : ApiError.server('Failed to create category')
 
     return ApiResponse.error(
       apiError.message,

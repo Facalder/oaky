@@ -19,8 +19,6 @@ export const users = pgTable(
   },
   (t) => [
     index('users_username_email_idx').on(t.username, t.email),
-    index('users_active_idx')
-      .on(t.id)
-      .where(sql`${t.status} = 'active'`),
+    index('users_active_idx').on(t.id).where(sql`${t.status} = 'active'`),
   ],
 )

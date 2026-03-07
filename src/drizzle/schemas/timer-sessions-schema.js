@@ -35,14 +35,17 @@ export const timerSessions = pgTable(
   ],
 )
 
-export const timerSessionsRelations = relations(timerSessions, ({ one, many }) => ({
-  user: one(users, {
-    fields: [timerSessions.userId],
-    references: [users.id],
+export const timerSessionsRelations = relations(
+  timerSessions,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [timerSessions.userId],
+      references: [users.id],
+    }),
+    task: one(tasks, {
+      fields: [timerSessions.taskId],
+      references: [tasks.id],
+    }),
+    taskRecords: many(taskRecords),
   }),
-  task: one(tasks, {
-    fields: [timerSessions.taskId],
-    references: [tasks.id],
-  }),
-  taskRecords: many(taskRecords),
-}))
+)

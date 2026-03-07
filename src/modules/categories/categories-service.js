@@ -12,34 +12,39 @@ import {
   updateCategoryRequestDto,
 } from './categories-dto'
 
-export async function getAllCategories() {
+export async function getAllCategories(urlEndpoint) {
   const startTime = Date.now()
 
   try {
-    // TODO: filter by authenticated user when auth is ready
     const rows = await db.select().from(categories)
     const data = categoryListResponseDto.parse(rows)
 
-    logger.info({
+    logger.info('Categories fetched successfully', {
       action: 'categories:getAll',
-      count: data.length,
-      durationMs: Date.now() - startTime,
+      endpoint: urlEndpoint,
+      count: rows.length,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return data
   } catch (error) {
-    logger.error({
+    logger.error('Failed to fetch categories', {
       action: 'categories:getAll',
-      error,
-      durationMs: Date.now() - startTime,
+      endpoint: urlEndpoint,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to fetch categories')
   }
 }
 
-export async function getCategoriesById(id) {
+export async function getCategoriesById(id, urlEndpoint) {
   const startTime = Date.now()
 
   try {
@@ -49,66 +54,79 @@ export async function getCategoriesById(id) {
       .where(eq(categories.id, id))
       .limit(1)
 
-    const row = rows[0]
+    const category = rows[0]
 
-    if (!row) {
+    if (!category) {
       throw ApiError.notFound('Category not found')
     }
 
-    const data = categoryResponseDto.parse(row)
+    const data = categoryResponseDto.parse(category)
 
-    logger.info({
+    logger.info('Category fetched successfully', {
       action: 'categories:getById',
+      endpoint: urlEndpoint,
       id,
-      durationMs: Date.now() - startTime,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return data
   } catch (error) {
-    logger.error({
+    logger.error('Failed to fetch category', {
       action: 'categories:getById',
+      endpoint: urlEndpoint,
       id,
-      error,
-      durationMs: Date.now() - startTime,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     if (error?.name === 'ApiError') throw error
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to fetch category')
   }
 }
 
-export async function createCategory(payload) {
+export async function createCategory(payload, urlEndpoint) {
   const startTime = Date.now()
 
   try {
     const validated = createCategoryRequestDto.parse(payload)
 
-    // TODO: attach userId from authenticated user when auth is ready
     const [created] = await db.insert(categories).values(validated).returning()
     const data = categoryResponseDto.parse(created)
 
-    logger.info({
+    logger.info('Category created successfully', {
       action: 'categories:create',
+      endpoint: urlEndpoint,
       id: data.id,
-      durationMs: Date.now() - startTime,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return data
   } catch (error) {
-    logger.error({
+    logger.error('Failed to create category', {
       action: 'categories:create',
-      error,
-      durationMs: Date.now() - startTime,
+      endpoint: urlEndpoint,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     if (error?.name === 'ApiError') throw error
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to create category')
   }
 }
 
-export async function updateCategory(id, payload) {
+export async function updateCategory(id, payload, urlEndpoint) {
   const startTime = Date.now()
 
   try {
@@ -126,28 +144,35 @@ export async function updateCategory(id, payload) {
 
     const data = categoryResponseDto.parse(updated)
 
-    logger.info({
+    logger.info('Category updated successfully', {
       action: 'categories:update',
+      endpoint: urlEndpoint,
       id,
-      durationMs: Date.now() - startTime,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return data
   } catch (error) {
-    logger.error({
+    logger.error('Failed to update category', {
       action: 'categories:update',
+      endpoint: urlEndpoint,
       id,
-      error,
-      durationMs: Date.now() - startTime,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     if (error?.name === 'ApiError') throw error
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to update category')
   }
 }
 
-export async function deleteCategory(id) {
+export async function deleteCategory(id, urlEndpoint) {
   const startTime = Date.now()
 
   try {
@@ -160,21 +185,28 @@ export async function deleteCategory(id) {
       throw ApiError.notFound('Category not found')
     }
 
-    logger.info({
+    logger.info('Category deleted successfully', {
       action: 'categories:delete',
+      endpoint: urlEndpoint,
       id,
-      durationMs: Date.now() - startTime,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return deleted
   } catch (error) {
-    logger.error({
+    logger.error('Failed to delete category', {
       action: 'categories:delete',
+      endpoint: urlEndpoint,
       id,
-      error,
-      durationMs: Date.now() - startTime,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     if (error?.name === 'ApiError') throw error
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to delete category')
