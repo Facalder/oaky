@@ -17,6 +17,7 @@ export const updateTimerSessionRequestDto = insertTimerSessionSchema
     startTime: true,
     endTime: true,
     durationSec: true,
+    pausedDurationSec: true,
     timerType: true,
   })
   .partial()
