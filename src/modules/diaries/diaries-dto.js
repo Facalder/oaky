@@ -14,9 +14,9 @@ export const createDiaryRequestDto = insertDiarySchema.omit({
 export const updateDiaryRequestDto = insertDiarySchema
   .pick({
     diaryDate: true,
-    bad: true,
-    good: true,
-    next: true,
+    badNote: true,
+    goodNote: true,
+    nextNote: true,
   })
   .partial()
 

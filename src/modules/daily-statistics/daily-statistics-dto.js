@@ -14,9 +14,11 @@ export const createDailyStatisticRequestDto = insertDailyStatisticSchema.omit({
 export const updateDailyStatisticRequestDto = insertDailyStatisticSchema
   .pick({
     statDate: true,
-    totalSec: true,
-    totalSessions: true,
+    plannedSec: true,
+    tasksPlanned: true,
+    recordedSec: true,
     tasksCompleted: true,
+    totalSessions: true,
   })
   .partial()
 

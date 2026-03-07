@@ -14,7 +14,12 @@ export const createTaskRecordRequestDto = insertTaskRecordSchema.omit({
 export const updateTaskRecordRequestDto = insertTaskRecordSchema
   .pick({
     recordDate: true,
+    timerSessionId: true,
+    dailyStatId: true,
+    plannedSec: true,
     totalSec: true,
+    isCompleted: true,
+    recordSource: true,
   })
   .partial()
 
