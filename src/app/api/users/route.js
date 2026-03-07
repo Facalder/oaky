@@ -1,4 +1,4 @@
-import { createDiary, getAllDiaries } from '@/modules/diaries/diaries-service'
+import { createUser, getAllUsers } from '@/modules/users/users-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
 
@@ -6,13 +6,13 @@ export async function GET(request) {
   const url = request.url
 
   try {
-    const data = await getAllDiaries(url)
-    return ApiResponse.ok('Diaries fetched successfully', data)
+    const data = await getAllUsers(url)
+    return ApiResponse.ok('Users fetched successfully', data)
   } catch (error) {
     const apiError =
       error instanceof ApiError
         ? error
-        : ApiError.server('Failed to fetch diaries')
+        : ApiError.server('Failed to fetch users')
 
     return ApiResponse.error(
       apiError.message,
@@ -27,13 +27,13 @@ export async function POST(request) {
 
   try {
     const payload = await request.json()
-    const data = await createDiary(payload, url)
-    return ApiResponse.created('Diary created successfully', data)
+    const data = await createUser(payload, url)
+    return ApiResponse.created('User created successfully', data)
   } catch (error) {
     const apiError =
       error instanceof ApiError
         ? error
-        : ApiError.server('Failed to create diary')
+        : ApiError.server('Failed to create user')
 
     return ApiResponse.error(
       apiError.message,

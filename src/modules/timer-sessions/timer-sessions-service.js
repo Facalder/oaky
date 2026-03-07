@@ -1,7 +1,7 @@
 'use server'
 
 import { eq } from 'drizzle-orm'
-import { db } from '@/drizzle'
+import db from '@/db/db'
 import { timerSessions } from '@/drizzle/schemas/timer-sessions-schema'
 import { ApiError } from '@/shared/errors/api-error'
 import { logger } from '@/shared/utils/logger'
@@ -215,5 +215,67 @@ export async function deleteTimerSession(id, urlEndpoint) {
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to delete timer session')
+  }
+}
+
+/**
+ * stopTimerSession — hentikan sesi timer yang sedang berjalan.
+ *
+ * Flow:
+ *   1. Route POST /api/timer-sessions → createTimerSession (endTime = null)
+ *   2. Route PATCH /api/timer-sessions/:id/stop → stopTimerSession
+ *      - Set endTime + durationSec
+ *      - TODO: setelah stop, trigger upsertTaskRecord + upsertDailyRecord
+ */
+export async function stopTimerSession(id, payload, urlEndpoint) {
+  const startTime = Date.now()
+
+  try {
+    // Hanya izinkan field yang relevan saat stop
+    const validated = updateTimerSessionRequestDto
+      .pick({ endTime: true, durationSec: true, pausedDurationSec: true })
+      .parse(payload)
+
+    const [updated] = await db
+      .update(timerSessions)
+      .set(validated)
+      .where(eq(timerSessions.id, id))
+      .returning()
+
+    if (!updated) {
+      throw ApiError.notFound('Timer session not found')
+    }
+
+    const data = timerSessionResponseDto.parse(updated)
+
+    // TODO: setelah stop, panggil upsertTaskRecord dan upsertDailyRecord
+    //       untuk menyinkronkan taskRecords.totalSec dan dailyStatistics
+
+    logger.info('Timer session stopped successfully', {
+      action: 'timerSessions:stop',
+      endpoint: urlEndpoint,
+      id,
+      durationSec: data.durationSec,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
+    })
+
+    return data
+  } catch (error) {
+    logger.error('Failed to stop timer session', {
+      action: 'timerSessions:stop',
+      endpoint: urlEndpoint,
+      id,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
+    })
+
+    if (error?.name === 'ApiError') throw error
+
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to stop timer session')
   }
 }

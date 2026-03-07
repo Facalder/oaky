@@ -1,7 +1,4 @@
-import {
-  createEvent,
-  getAllEvents,
-} from '@/modules/events/events-service'
+import { createEvent, getAllEvents } from '@/modules/events/events-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
 

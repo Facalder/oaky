@@ -1,7 +1,7 @@
 'use server'
 
 import { eq } from 'drizzle-orm'
-import { db } from '@/drizzle'
+import db from '@/db/db'
 import { categories } from '@/drizzle/schemas/categories-schema'
 import { ApiError } from '@/shared/errors/api-error'
 import { logger } from '@/shared/utils/logger'

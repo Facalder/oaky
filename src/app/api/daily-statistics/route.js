@@ -1,4 +1,7 @@
-import { createDiary, getAllDiaries } from '@/modules/diaries/diaries-service'
+import {
+  createDailyStatistic,
+  getAllDailyStatistics,
+} from '@/modules/daily-statistics/daily-statistics-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
 
@@ -6,13 +9,13 @@ export async function GET(request) {
   const url = request.url
 
   try {
-    const data = await getAllDiaries(url)
-    return ApiResponse.ok('Diaries fetched successfully', data)
+    const data = await getAllDailyStatistics(url)
+    return ApiResponse.ok('Daily statistics fetched successfully', data)
   } catch (error) {
     const apiError =
       error instanceof ApiError
         ? error
-        : ApiError.server('Failed to fetch diaries')
+        : ApiError.server('Failed to fetch daily statistics')
 
     return ApiResponse.error(
       apiError.message,
@@ -27,13 +30,13 @@ export async function POST(request) {
 
   try {
     const payload = await request.json()
-    const data = await createDiary(payload, url)
-    return ApiResponse.created('Diary created successfully', data)
+    const data = await createDailyStatistic(payload, url)
+    return ApiResponse.created('Daily statistic created successfully', data)
   } catch (error) {
     const apiError =
       error instanceof ApiError
         ? error
-        : ApiError.server('Failed to create diary')
+        : ApiError.server('Failed to create daily statistic')
 
     return ApiResponse.error(
       apiError.message,
