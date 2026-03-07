@@ -1,4 +1,7 @@
-import { createCategory, getAllCategories } from '@/modules/categories/categories-service'
+import {
+  createCategory,
+  getAllCategories,
+} from '@/modules/categories/categories-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
 import { rateLimiter } from '@/shared/utils/rate-limitter'

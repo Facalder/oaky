@@ -1,4 +1,5 @@
 // biome-ignore assist/source/organizeImports: <Disable enum at the top level>
+export * from './schemas/auth-schema'
 export * from './schemas/categories-schema'
 export * from './schemas/daily-statistics-schema'
 export * from './schemas/diaries-schema'

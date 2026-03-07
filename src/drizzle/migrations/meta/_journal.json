@@ -15,6 +15,13 @@
       "when": 1772861774797,
       "tag": "0001_add_tasks_completion",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772869227406,
+      "tag": "0002_real_harpoon",
+      "breakpoints": true
     }
   ]
 }

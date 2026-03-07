@@ -5,11 +5,17 @@ import { users } from '@/drizzle/schemas/users-schema'
 const insertUserSchema = createInsertSchema(users)
 const selectUserSchema = createSelectSchema(users)
 
-export const createUserRequestDto = insertUserSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-})
+export const createUserRequestDto = insertUserSchema
+  .omit({
+    id: true,
+    role: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    email: z.email(),
+    password: z.string().min(8),
+  })
 
 export const updateUserRequestDto = insertUserSchema
   .pick({
@@ -18,6 +24,10 @@ export const updateUserRequestDto = insertUserSchema
     email: true,
     password: true,
     status: true,
+  })
+  .extend({
+    email: z.email(),
+    password: z.string().min(8),
   })
   .partial()
 

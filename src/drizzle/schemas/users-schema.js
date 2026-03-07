@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
-import { index, pgTable, text, varchar } from 'drizzle-orm/pg-core'
-import { UserStatusEnum } from '@/shared/constants/enums'
+import { boolean, index, pgTable, text, varchar } from 'drizzle-orm/pg-core'
+import { UserStatusEnum, UserRoleEnum } from '@/shared/constants/enums'
 import { globalId, globalTimestamps } from '../global'
 
 export const users = pgTable(
@@ -11,8 +11,11 @@ export const users = pgTable(
     username: varchar('username', { length: 10 }).notNull().unique(),
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 320 }).notNull().unique(),
+    emailVerified: boolean('email_verified').default(false).notNull(),
     password: text('password').notNull(),
+    image: text('image'),
 
+    role: UserRoleEnum('role').default('user'),
     status: UserStatusEnum('status').default('active'),
 
     ...globalTimestamps,
