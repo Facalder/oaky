@@ -4,18 +4,12 @@ import {
 } from '@/modules/timer-sessions/timer-sessions-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
+import { rateLimiter } from '@/shared/utils/rate-limitter'
 
-/**
- * GET  /api/timer-sessions     → list semua timer sessions
- * POST /api/timer-sessions     → mulai (start) sesi timer baru
- *
- * Catatan flow dari schema:
- *   1. POST → buat sesi dengan startTime, sessionDate, taskId, timerType.
- *      endTime & durationSec masih null (sesi sedang berjalan).
- *   2. PATCH /api/timer-sessions/:id/stop → isi endTime + durationSec
- *      saat timer dihentikan → trigger upsert taskRecord + dailyStatistics.
- */
 export async function GET(request) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
 
   try {
@@ -36,6 +30,9 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
 
   try {

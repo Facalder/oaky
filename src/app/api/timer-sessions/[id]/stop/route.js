@@ -1,18 +1,12 @@
 import { stopTimerSession } from '@/modules/timer-sessions/timer-sessions-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
+import { rateLimiter } from '@/shared/utils/rate-limitter'
 
-/**
- * PATCH /api/timer-sessions/:id/stop
- *
- * Endpoint khusus untuk menghentikan sesi timer yang sedang berjalan.
- * Body: { endTime, durationSec, pausedDurationSec? }
- *
- * Setelah stop:
- *   - endTime + durationSec diisi di timerSessions.
- *   - TODO: service akan trigger upsert taskRecord + dailyStatistics.
- */
 export async function PATCH(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
 

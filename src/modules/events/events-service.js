@@ -5,6 +5,7 @@ import db from '@/db/db'
 import { events } from '@/drizzle/schemas/events-schema'
 import { ApiError } from '@/shared/errors/api-error'
 import { logger } from '@/shared/utils/logger'
+import { handleError } from '@/shared/utils/handle-error'
 import {
   createEventRequestDto,
   eventListResponseDto,
@@ -14,6 +15,7 @@ import {
 
 export async function getAllEvents(urlEndpoint) {
   const startTime = Date.now()
+  const action = 'events:getAll'
 
   try {
     // TODO: filter by authenticated user when auth is ready
@@ -21,7 +23,7 @@ export async function getAllEvents(urlEndpoint) {
     const data = eventListResponseDto.parse(rows)
 
     logger.info('Events fetched successfully', {
-      action: 'events:getAll',
+      action,
       endpoint: urlEndpoint,
       count: rows.length,
       duration: `${Date.now() - startTime}ms`,
@@ -30,23 +32,13 @@ export async function getAllEvents(urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to fetch events', {
-      action: 'events:getAll',
-      endpoint: urlEndpoint,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to fetch events')
+    handleError(error, { action, endpoint: urlEndpoint, startTime })
   }
 }
 
-export async function getEventsById(id, urlEndpoint) {
+export async function getEventById(id, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'events:getById'
 
   try {
     const rows = await db
@@ -57,14 +49,12 @@ export async function getEventsById(id, urlEndpoint) {
 
     const row = rows[0]
 
-    if (!row) {
-      throw ApiError.notFound('Event not found')
-    }
+    if (!row) throw ApiError.notFound('Event not found')
 
     const data = eventResponseDto.parse(row)
 
     logger.info('Event fetched successfully', {
-      action: 'events:getById',
+      action,
       endpoint: urlEndpoint,
       id,
       duration: `${Date.now() - startTime}ms`,
@@ -73,26 +63,13 @@ export async function getEventsById(id, urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to fetch event', {
-      action: 'events:getById',
-      endpoint: urlEndpoint,
-      id,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to fetch event')
+    handleError(error, { action, endpoint: urlEndpoint, id, startTime })
   }
 }
 
 export async function createEvent(payload, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'events:create'
 
   try {
     const validated = createEventRequestDto.parse(payload)
@@ -102,7 +79,7 @@ export async function createEvent(payload, urlEndpoint) {
     const data = eventResponseDto.parse(created)
 
     logger.info('Event created successfully', {
-      action: 'events:create',
+      action,
       endpoint: urlEndpoint,
       id: data.id,
       duration: `${Date.now() - startTime}ms`,
@@ -111,25 +88,13 @@ export async function createEvent(payload, urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to create event', {
-      action: 'events:create',
-      endpoint: urlEndpoint,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to create event')
+    handleError(error, { action, endpoint: urlEndpoint, startTime })
   }
 }
 
 export async function updateEvent(id, payload, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'events:update'
 
   try {
     const validated = updateEventRequestDto.parse(payload)
@@ -140,14 +105,12 @@ export async function updateEvent(id, payload, urlEndpoint) {
       .where(eq(events.id, id))
       .returning()
 
-    if (!updated) {
-      throw ApiError.notFound('Event not found')
-    }
+    if (!updated) throw ApiError.notFound('Event not found')
 
     const data = eventResponseDto.parse(updated)
 
     logger.info('Event updated successfully', {
-      action: 'events:update',
+      action,
       endpoint: urlEndpoint,
       id,
       duration: `${Date.now() - startTime}ms`,
@@ -156,26 +119,13 @@ export async function updateEvent(id, payload, urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to update event', {
-      action: 'events:update',
-      endpoint: urlEndpoint,
-      id,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to update event')
+    handleError(error, { action, endpoint: urlEndpoint, id, startTime })
   }
 }
 
 export async function deleteEvent(id, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'events:delete'
 
   try {
     const [deleted] = await db
@@ -183,12 +133,10 @@ export async function deleteEvent(id, urlEndpoint) {
       .where(eq(events.id, id))
       .returning()
 
-    if (!deleted) {
-      throw ApiError.notFound('Event not found')
-    }
+    if (!deleted) throw ApiError.notFound('Event not found')
 
     logger.info('Event deleted successfully', {
-      action: 'events:delete',
+      action,
       endpoint: urlEndpoint,
       id,
       duration: `${Date.now() - startTime}ms`,
@@ -197,20 +145,6 @@ export async function deleteEvent(id, urlEndpoint) {
 
     return deleted
   } catch (error) {
-    logger.error('Failed to delete event', {
-      action: 'events:delete',
-      endpoint: urlEndpoint,
-      id,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to delete event')
+    handleError(error, { action, endpoint: urlEndpoint, id, startTime })
   }
 }

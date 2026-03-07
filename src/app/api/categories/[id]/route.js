@@ -1,17 +1,21 @@
 import {
   deleteCategory,
-  getCategoriesById,
+  getCategoryById,
   updateCategory,
 } from '@/modules/categories/categories-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
+import { rateLimiter } from '@/shared/utils/rate-limitter'
 
 export async function GET(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
 
   try {
-    const data = await getCategoriesById(id, url)
+    const data = await getCategoryById(id, url)
     return ApiResponse.ok('Category fetched successfully', data)
   } catch (error) {
     const apiError =
@@ -28,6 +32,9 @@ export async function GET(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
 
@@ -50,6 +57,9 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
 

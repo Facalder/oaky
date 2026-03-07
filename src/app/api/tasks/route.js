@@ -1,8 +1,12 @@
 import { createTask, getAllTasks } from '@/modules/tasks/tasks-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
+import { rateLimiter } from '@/shared/utils/rate-limitter'
 
 export async function GET(request) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   try {
     const { searchParams } = new URL(url)
@@ -28,6 +32,9 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   try {
     const body = await request.json()

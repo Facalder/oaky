@@ -4,8 +4,12 @@ import {
 } from '@/modules/daily-statistics/daily-statistics-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
+import { rateLimiter } from '@/shared/utils/rate-limitter'
 
 export async function GET(request) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
 
   try {
@@ -26,6 +30,9 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
 
   try {

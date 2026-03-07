@@ -5,8 +5,12 @@ import {
 } from '@/modules/tasks/tasks-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
+import { rateLimiter } from '@/shared/utils/rate-limitter'
 
 export async function GET(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
   try {
@@ -26,6 +30,9 @@ export async function GET(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
   try {
@@ -46,6 +53,9 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
   try {

@@ -5,6 +5,7 @@ import db from '@/db/db'
 import { dailyStatistics } from '@/drizzle/schemas/daily-statistics-schema.js'
 import { ApiError } from '@/shared/errors/api-error'
 import { logger } from '@/shared/utils/logger'
+import { handleError } from '@/shared/utils/handle-error'
 import {
   createDailyStatisticRequestDto,
   dailyStatisticListResponseDto,
@@ -14,6 +15,7 @@ import {
 
 export async function getAllDailyStatistics(urlEndpoint) {
   const startTime = Date.now()
+  const action = 'dailyStatistics:getAll'
 
   try {
     // TODO: filter by authenticated user when auth is ready
@@ -21,7 +23,7 @@ export async function getAllDailyStatistics(urlEndpoint) {
     const data = dailyStatisticListResponseDto.parse(rows)
 
     logger.info('Daily statistics fetched successfully', {
-      action: 'dailyStatistics:getAll',
+      action,
       endpoint: urlEndpoint,
       count: rows.length,
       duration: `${Date.now() - startTime}ms`,
@@ -30,23 +32,13 @@ export async function getAllDailyStatistics(urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to fetch daily statistics', {
-      action: 'dailyStatistics:getAll',
-      endpoint: urlEndpoint,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to fetch daily statistics')
+    handleError(error, { action, endpoint: urlEndpoint, startTime })
   }
 }
 
-export async function getDailyStatisticsById(id, urlEndpoint) {
+export async function getDailyStatisticById(id, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'dailyStatistics:getById'
 
   try {
     const rows = await db
@@ -57,14 +49,12 @@ export async function getDailyStatisticsById(id, urlEndpoint) {
 
     const row = rows[0]
 
-    if (!row) {
-      throw ApiError.notFound('Daily statistic not found')
-    }
+    if (!row) throw ApiError.notFound('Daily statistic not found')
 
     const data = dailyStatisticResponseDto.parse(row)
 
     logger.info('Daily statistic fetched successfully', {
-      action: 'dailyStatistics:getById',
+      action,
       endpoint: urlEndpoint,
       id,
       duration: `${Date.now() - startTime}ms`,
@@ -73,26 +63,13 @@ export async function getDailyStatisticsById(id, urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to fetch daily statistic', {
-      action: 'dailyStatistics:getById',
-      endpoint: urlEndpoint,
-      id,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to fetch daily statistic')
+    handleError(error, { action, endpoint: urlEndpoint, id, startTime })
   }
 }
 
 export async function createDailyStatistic(payload, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'dailyStatistics:create'
 
   try {
     const validated = createDailyStatisticRequestDto.parse(payload)
@@ -105,7 +82,7 @@ export async function createDailyStatistic(payload, urlEndpoint) {
     const data = dailyStatisticResponseDto.parse(created)
 
     logger.info('Daily statistic created successfully', {
-      action: 'dailyStatistics:create',
+      action,
       endpoint: urlEndpoint,
       id: data.id,
       duration: `${Date.now() - startTime}ms`,
@@ -114,25 +91,13 @@ export async function createDailyStatistic(payload, urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to create daily statistic', {
-      action: 'dailyStatistics:create',
-      endpoint: urlEndpoint,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to create daily statistic')
+    handleError(error, { action, endpoint: urlEndpoint, startTime })
   }
 }
 
 export async function updateDailyStatistic(id, payload, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'dailyStatistics:update'
 
   try {
     const validated = updateDailyStatisticRequestDto.parse(payload)
@@ -143,14 +108,12 @@ export async function updateDailyStatistic(id, payload, urlEndpoint) {
       .where(eq(dailyStatistics.id, id))
       .returning()
 
-    if (!updated) {
-      throw ApiError.notFound('Daily statistic not found')
-    }
+    if (!updated) throw ApiError.notFound('Daily statistic not found')
 
     const data = dailyStatisticResponseDto.parse(updated)
 
     logger.info('Daily statistic updated successfully', {
-      action: 'dailyStatistics:update',
+      action,
       endpoint: urlEndpoint,
       id,
       duration: `${Date.now() - startTime}ms`,
@@ -159,26 +122,13 @@ export async function updateDailyStatistic(id, payload, urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to update daily statistic', {
-      action: 'dailyStatistics:update',
-      endpoint: urlEndpoint,
-      id,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to update daily statistic')
+    handleError(error, { action, endpoint: urlEndpoint, id, startTime })
   }
 }
 
 export async function deleteDailyStatistic(id, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'dailyStatistics:delete'
 
   try {
     const [deleted] = await db
@@ -186,12 +136,10 @@ export async function deleteDailyStatistic(id, urlEndpoint) {
       .where(eq(dailyStatistics.id, id))
       .returning()
 
-    if (!deleted) {
-      throw ApiError.notFound('Daily statistic not found')
-    }
+    if (!deleted) throw ApiError.notFound('Daily statistic not found')
 
     logger.info('Daily statistic deleted successfully', {
-      action: 'dailyStatistics:delete',
+      action,
       endpoint: urlEndpoint,
       id,
       duration: `${Date.now() - startTime}ms`,
@@ -200,20 +148,6 @@ export async function deleteDailyStatistic(id, urlEndpoint) {
 
     return deleted
   } catch (error) {
-    logger.error('Failed to delete daily statistic', {
-      action: 'dailyStatistics:delete',
-      endpoint: urlEndpoint,
-      id,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to delete daily statistic')
+    handleError(error, { action, endpoint: urlEndpoint, id, startTime })
   }
 }

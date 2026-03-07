@@ -4,17 +4,12 @@ import {
 } from '@/modules/task-records/task-records-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
+import { rateLimiter } from '@/shared/utils/rate-limitter'
 
-/**
- * GET  /api/task-records       → list semua task records
- * POST /api/task-records       → buat task record baru (atau upsert via service)
- *
- * Catatan flow:
- *   - Record bisa terbentuk dari timer (recordSource:'timer')
- *     atau manual (recordSource:'manual') oleh user.
- *   - Setelah upsert, service layer harus meng-update dailyStatistics.
- */
 export async function GET(request) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
 
   try {
@@ -35,6 +30,9 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
 
   try {

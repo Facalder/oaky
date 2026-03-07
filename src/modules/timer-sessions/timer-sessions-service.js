@@ -5,6 +5,7 @@ import db from '@/db/db'
 import { timerSessions } from '@/drizzle/schemas/timer-sessions-schema'
 import { ApiError } from '@/shared/errors/api-error'
 import { logger } from '@/shared/utils/logger'
+import { handleError } from '@/shared/utils/handle-error'
 import {
   createTimerSessionRequestDto,
   timerSessionListResponseDto,
@@ -14,6 +15,7 @@ import {
 
 export async function getAllTimerSessions(urlEndpoint) {
   const startTime = Date.now()
+  const action = 'timerSessions:getAll'
 
   try {
     // TODO: filter by authenticated user when auth is ready
@@ -21,7 +23,7 @@ export async function getAllTimerSessions(urlEndpoint) {
     const data = timerSessionListResponseDto.parse(rows)
 
     logger.info('Timer sessions fetched successfully', {
-      action: 'timerSessions:getAll',
+      action,
       endpoint: urlEndpoint,
       count: rows.length,
       duration: `${Date.now() - startTime}ms`,
@@ -30,23 +32,13 @@ export async function getAllTimerSessions(urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to fetch timer sessions', {
-      action: 'timerSessions:getAll',
-      endpoint: urlEndpoint,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to fetch timer sessions')
+    handleError(error, { action, endpoint: urlEndpoint, startTime })
   }
 }
 
-export async function getTimerSessionsById(id, urlEndpoint) {
+export async function getTimerSessionById(id, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'timerSessions:getById'
 
   try {
     const rows = await db
@@ -57,14 +49,12 @@ export async function getTimerSessionsById(id, urlEndpoint) {
 
     const row = rows[0]
 
-    if (!row) {
-      throw ApiError.notFound('Timer session not found')
-    }
+    if (!row) throw ApiError.notFound('Timer session not found')
 
     const data = timerSessionResponseDto.parse(row)
 
     logger.info('Timer session fetched successfully', {
-      action: 'timerSessions:getById',
+      action,
       endpoint: urlEndpoint,
       id,
       duration: `${Date.now() - startTime}ms`,
@@ -73,26 +63,13 @@ export async function getTimerSessionsById(id, urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to fetch timer session', {
-      action: 'timerSessions:getById',
-      endpoint: urlEndpoint,
-      id,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to fetch timer session')
+    handleError(error, { action, endpoint: urlEndpoint, id, startTime })
   }
 }
 
 export async function createTimerSession(payload, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'timerSessions:create'
 
   try {
     const validated = createTimerSessionRequestDto.parse(payload)
@@ -105,7 +82,7 @@ export async function createTimerSession(payload, urlEndpoint) {
     const data = timerSessionResponseDto.parse(created)
 
     logger.info('Timer session created successfully', {
-      action: 'timerSessions:create',
+      action,
       endpoint: urlEndpoint,
       id: data.id,
       duration: `${Date.now() - startTime}ms`,
@@ -114,25 +91,13 @@ export async function createTimerSession(payload, urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to create timer session', {
-      action: 'timerSessions:create',
-      endpoint: urlEndpoint,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to create timer session')
+    handleError(error, { action, endpoint: urlEndpoint, startTime })
   }
 }
 
 export async function updateTimerSession(id, payload, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'timerSessions:update'
 
   try {
     const validated = updateTimerSessionRequestDto.parse(payload)
@@ -143,14 +108,12 @@ export async function updateTimerSession(id, payload, urlEndpoint) {
       .where(eq(timerSessions.id, id))
       .returning()
 
-    if (!updated) {
-      throw ApiError.notFound('Timer session not found')
-    }
+    if (!updated) throw ApiError.notFound('Timer session not found')
 
     const data = timerSessionResponseDto.parse(updated)
 
     logger.info('Timer session updated successfully', {
-      action: 'timerSessions:update',
+      action,
       endpoint: urlEndpoint,
       id,
       duration: `${Date.now() - startTime}ms`,
@@ -159,26 +122,13 @@ export async function updateTimerSession(id, payload, urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to update timer session', {
-      action: 'timerSessions:update',
-      endpoint: urlEndpoint,
-      id,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to update timer session')
+    handleError(error, { action, endpoint: urlEndpoint, id, startTime })
   }
 }
 
 export async function deleteTimerSession(id, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'timerSessions:delete'
 
   try {
     const [deleted] = await db
@@ -186,12 +136,10 @@ export async function deleteTimerSession(id, urlEndpoint) {
       .where(eq(timerSessions.id, id))
       .returning()
 
-    if (!deleted) {
-      throw ApiError.notFound('Timer session not found')
-    }
+    if (!deleted) throw ApiError.notFound('Timer session not found')
 
     logger.info('Timer session deleted successfully', {
-      action: 'timerSessions:delete',
+      action,
       endpoint: urlEndpoint,
       id,
       duration: `${Date.now() - startTime}ms`,
@@ -200,21 +148,7 @@ export async function deleteTimerSession(id, urlEndpoint) {
 
     return deleted
   } catch (error) {
-    logger.error('Failed to delete timer session', {
-      action: 'timerSessions:delete',
-      endpoint: urlEndpoint,
-      id,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to delete timer session')
+    handleError(error, { action, endpoint: urlEndpoint, id, startTime })
   }
 }
 
@@ -229,9 +163,9 @@ export async function deleteTimerSession(id, urlEndpoint) {
  */
 export async function stopTimerSession(id, payload, urlEndpoint) {
   const startTime = Date.now()
+  const action = 'timerSessions:stop'
 
   try {
-    // Hanya izinkan field yang relevan saat stop
     const validated = updateTimerSessionRequestDto
       .pick({ endTime: true, durationSec: true, pausedDurationSec: true })
       .parse(payload)
@@ -242,9 +176,7 @@ export async function stopTimerSession(id, payload, urlEndpoint) {
       .where(eq(timerSessions.id, id))
       .returning()
 
-    if (!updated) {
-      throw ApiError.notFound('Timer session not found')
-    }
+    if (!updated) throw ApiError.notFound('Timer session not found')
 
     const data = timerSessionResponseDto.parse(updated)
 
@@ -252,7 +184,7 @@ export async function stopTimerSession(id, payload, urlEndpoint) {
     //       untuk menyinkronkan taskRecords.totalSec dan dailyStatistics
 
     logger.info('Timer session stopped successfully', {
-      action: 'timerSessions:stop',
+      action,
       endpoint: urlEndpoint,
       id,
       durationSec: data.durationSec,
@@ -262,20 +194,6 @@ export async function stopTimerSession(id, payload, urlEndpoint) {
 
     return data
   } catch (error) {
-    logger.error('Failed to stop timer session', {
-      action: 'timerSessions:stop',
-      endpoint: urlEndpoint,
-      id,
-      errorName: error?.name,
-      errorMessage: error?.message,
-      duration: `${Date.now() - startTime}ms`,
-      timestamp: new Date().toISOString(),
-    })
-
-    if (error?.name === 'ApiError') throw error
-
-    throw error?.name === 'ZodError'
-      ? ApiError.validation('Validation failed', error.errors)
-      : ApiError.server('Failed to stop timer session')
+    handleError(error, { action, endpoint: urlEndpoint, id, startTime })
   }
 }

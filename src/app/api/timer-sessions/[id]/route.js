@@ -1,22 +1,21 @@
 import {
   deleteTimerSession,
-  getTimerSessionsById,
+  getTimerSessionById,
   updateTimerSession,
 } from '@/modules/timer-sessions/timer-sessions-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
+import { rateLimiter } from '@/shared/utils/rate-limitter'
 
-/**
- * GET    /api/timer-sessions/:id       → ambil detail satu sesi
- * PATCH  /api/timer-sessions/:id       → update sesi secara umum
- * DELETE /api/timer-sessions/:id       → hapus sesi
- */
 export async function GET(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
 
   try {
-    const data = await getTimerSessionsById(id, url)
+    const data = await getTimerSessionById(id, url)
     return ApiResponse.ok('Timer session fetched successfully', data)
   } catch (error) {
     const apiError =
@@ -33,6 +32,9 @@ export async function GET(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
 
@@ -55,6 +57,9 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
 

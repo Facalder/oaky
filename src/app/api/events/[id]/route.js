@@ -1,17 +1,21 @@
 import {
   deleteEvent,
-  getEventsById,
+  getEventById,
   updateEvent,
 } from '@/modules/events/events-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
+import { rateLimiter } from '@/shared/utils/rate-limitter'
 
 export async function GET(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
 
   try {
-    const data = await getEventsById(id, url)
+    const data = await getEventById(id, url)
     return ApiResponse.ok('Event fetched successfully', data)
   } catch (error) {
     const apiError =
@@ -28,6 +32,9 @@ export async function GET(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
 
@@ -50,6 +57,9 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const limit = rateLimiter(request)
+  if (limit) return limit
+
   const url = request.url
   const { id } = await params
 
