@@ -6,7 +6,19 @@ export async function GET(request) {
   const url = request.url
 
   try {
-    const data = await getAllTasks(url)
+    const { searchParams } = new URL(url)
+    const queryParams = {
+      categoryId: searchParams.get('categoryId'),
+      status: searchParams.get('status'),
+      isCompleted: searchParams.get('isCompleted'),
+      isUpcoming: searchParams.get('isUpcoming'),
+    }
+
+    const cleanedQuery = Object.fromEntries(
+      Object.entries(queryParams).filter(([_, v]) => v != null)
+    )
+
+    const data = await getAllTasks(url, cleanedQuery)
 
     return ApiResponse.ok('Tasks fetched successfully', data)
   } catch (error) {

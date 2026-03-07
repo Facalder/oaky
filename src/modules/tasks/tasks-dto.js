@@ -19,16 +19,15 @@ export const createTaskRequestDto = insertTaskSchema
 
 export const updateTaskRequestDto = insertTaskSchema
   .pick({
-    userId: true,
     categoryId: true,
     title: true,
     startAt: true,
     endAt: true,
-    targetSec: true,
     color: true,
     isEveryday: true,
     repeatDays: true,
     status: true,
+    isCompleted: true,
   })
   .partial()
 

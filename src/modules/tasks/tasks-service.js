@@ -1,6 +1,6 @@
 'use server'
 
-import { eq } from 'drizzle-orm'
+import { eq, and, gt } from 'drizzle-orm'
 import db from '@/db/db'
 import { tasks } from '@/drizzle/schemas/tasks-schema'
 import { ApiError } from '@/shared/errors/api-error'
@@ -12,11 +12,33 @@ import {
   updateTaskRequestDto,
 } from './tasks-dto'
 
-export async function getAllTasks(urlEndpoint) {
+export async function getAllTasks(urlEndpoint, queryParams = {}) {
   const startTime = Date.now()
 
   try {
-    const rows = await db.select().from(tasks)
+    const conditions = []
+
+    if (queryParams.categoryId) {
+      conditions.push(eq(tasks.categoryId, queryParams.categoryId))
+    }
+
+    if (queryParams.status) {
+      conditions.push(eq(tasks.status, queryParams.status))
+    }
+
+    if (queryParams.isCompleted !== undefined) {
+      conditions.push(eq(tasks.isCompleted, queryParams.isCompleted === 'true'))
+    }
+
+    if (queryParams.isUpcoming === 'true') {
+      const now = new Date()
+      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:00`
+      conditions.push(gt(tasks.endAt, currentTime))
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+
+    const rows = await db.select().from(tasks).where(whereClause).orderBy(tasks.startAt)
     const data = taskListResponseDto.parse(rows)
 
     logger.info('Tasks fetched successfully', {
@@ -127,6 +149,10 @@ export async function updateTask(id, payload, urlEndpoint) {
   try {
     const validated = updateTaskRequestDto.parse(payload)
 
+    if (Object.keys(validated).length === 0) {
+      throw ApiError.badRequest('No valid fields provided for update')
+    }
+
     const [updated] = await db
       .update(tasks)
       .set(validated)
@@ -167,9 +193,59 @@ export async function updateTask(id, payload, urlEndpoint) {
   }
 }
 
-export async function deleteTask(id, urlEndpoint) {
+export async function toggleTaskCompletion(id, urlEndpoint) {
   const startTime = Date.now()
 
+  try {
+    const rows = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1)
+    const task = rows[0]
+
+    if (!task) {
+      throw ApiError.notFound('Task not found')
+    }
+
+    const newIsCompleted = !task.isCompleted
+
+    const [updated] = await db
+      .update(tasks)
+      .set({ isCompleted: newIsCompleted })
+      .where(eq(tasks.id, id))
+      .returning()
+
+    const data = taskResponseDto.parse(updated)
+
+    logger.info('Task completion toggled successfully', {
+      action: 'tasks:toggleCompletion',
+      endpoint: urlEndpoint,
+      id,
+      isCompleted: newIsCompleted,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
+    })
+
+    return data
+  } catch (error) {
+    logger.error('Failed to toggle task completion', {
+      action: 'tasks:toggleCompletion',
+      endpoint: urlEndpoint,
+      id,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
+    })
+
+    if (error?.name === 'ApiError') throw error
+
+    throw error?.name === 'ZodError'
+      ? ApiError.validation('Validation failed', error.errors)
+      : ApiError.server('Failed to toggle task completion')
+  }
+}
+
+export async function deleteTask(id, urlEndpoint) {
+  const startTime = Date.now()
+  
   try {
     const [deleted] = await db.delete(tasks).where(eq(tasks.id, id)).returning()
 

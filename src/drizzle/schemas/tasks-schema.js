@@ -56,6 +56,7 @@ export const tasks = pgTable(
     repeatDays: text('repeat_days').array(),
 
     status: StatusEnum('status').default('active'),
+    isCompleted: boolean('is_completed').notNull().default(false),
 
     ...globalTimestamps,
   },
