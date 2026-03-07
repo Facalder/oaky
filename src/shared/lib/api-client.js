@@ -24,6 +24,6 @@ export async function apiClient(endpoint, options = {}) {
     ...options.headers,
   }
 
-  const res = await fetch(url, { ...options, headers })
+  const res = await fetch(url, { ...options, headers, credentials: 'include' })
   return parseResponse(res)
 }

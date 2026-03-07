@@ -1,16 +1,17 @@
 import { createUser, getAllUsers } from '@/modules/users/users-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
+import { withAuth } from '@/shared/middlewares/with-auth'
 import { rateLimiter } from '@/shared/utils/rate-limitter'
 
-export async function GET(request) {
+export const GET = withAuth(async function (request, _context, userId) {
   const limit = rateLimiter(request)
   if (limit) return limit
 
   const url = request.url
 
   try {
-    const data = await getAllUsers(url)
+    const data = await getAllUsers(url, userId)
     return ApiResponse.ok('Users fetched successfully', data)
   } catch (error) {
     const apiError =
@@ -18,15 +19,11 @@ export async function GET(request) {
         ? error
         : ApiError.server('Failed to fetch users')
 
-    return ApiResponse.error(
-      apiError.message,
-      apiError.statusCode,
-      apiError.errors,
-    )
+    return ApiResponse.error(apiError.message, apiError.statusCode, apiError.errors)
   }
-}
+})
 
-export async function POST(request) {
+export const POST = withAuth(async function (request, _context, userId) {
   const limit = rateLimiter(request)
   if (limit) return limit
 
@@ -34,7 +31,7 @@ export async function POST(request) {
 
   try {
     const payload = await request.json()
-    const data = await createUser(payload, url)
+    const data = await createUser(payload, url, userId)
     return ApiResponse.created('User created successfully', data)
   } catch (error) {
     const apiError =
@@ -42,10 +39,6 @@ export async function POST(request) {
         ? error
         : ApiError.server('Failed to create user')
 
-    return ApiResponse.error(
-      apiError.message,
-      apiError.statusCode,
-      apiError.errors,
-    )
+    return ApiResponse.error(apiError.message, apiError.statusCode, apiError.errors)
   }
-}
+})

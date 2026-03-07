@@ -4,16 +4,17 @@ import {
 } from '@/modules/task-records/task-records-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
+import { withAuth } from '@/shared/middlewares/with-auth'
 import { rateLimiter } from '@/shared/utils/rate-limitter'
 
-export async function GET(request) {
+export const GET = withAuth(async function (request, _context, userId) {
   const limit = rateLimiter(request)
   if (limit) return limit
 
   const url = request.url
 
   try {
-    const data = await getAllTaskRecords(url)
+    const data = await getAllTaskRecords(url, userId)
     return ApiResponse.ok('Task records fetched successfully', data)
   } catch (error) {
     const apiError =
@@ -21,15 +22,11 @@ export async function GET(request) {
         ? error
         : ApiError.server('Failed to fetch task records')
 
-    return ApiResponse.error(
-      apiError.message,
-      apiError.statusCode,
-      apiError.errors,
-    )
+    return ApiResponse.error(apiError.message, apiError.statusCode, apiError.errors)
   }
-}
+})
 
-export async function POST(request) {
+export const POST = withAuth(async function (request, _context, userId) {
   const limit = rateLimiter(request)
   if (limit) return limit
 
@@ -37,7 +34,7 @@ export async function POST(request) {
 
   try {
     const payload = await request.json()
-    const data = await createTaskRecord(payload, url)
+    const data = await createTaskRecord(payload, url, userId)
     return ApiResponse.created('Task record created successfully', data)
   } catch (error) {
     const apiError =
@@ -45,10 +42,6 @@ export async function POST(request) {
         ? error
         : ApiError.server('Failed to create task record')
 
-    return ApiResponse.error(
-      apiError.message,
-      apiError.statusCode,
-      apiError.errors,
-    )
+    return ApiResponse.error(apiError.message, apiError.statusCode, apiError.errors)
   }
-}
+})

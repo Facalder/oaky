@@ -15,34 +15,17 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  session: {
+    cookieCache: {
+      enabled: true,
+    }
+  },
   advanced: {
     database: {
       generateId: false,
     },
     disableOriginCheck: true
   },
-  // trustedOrigins: (request) => {
-  //   const allowedOrigins = ["http://localhost:3000"];
-    
-  //   if (process.env.NODE_ENV === "production") {
-  //     const origin = request.headers.get("origin") || "";
-      
-  //     // Allow production domain
-  //     allowedOrigins.push("https://oaky.vercel.app");
-      
-  //     // Allow current Vercel deployment
-  //     if (process.env.VERCEL_URL) {
-  //       allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
-  //     }
-      
-  //     // Allow any vercel preview deployment (dengan validasi)
-  //     if (origin && origin.endsWith(".vercel.app")) {
-  //       allowedOrigins.push(origin);
-  //     }
-  //   }
-    
-  //   return allowedOrigins;
-  // },
   basePath: '/api/auth',
   baseURL: process.env.BETTER_AUTH_URL
 })

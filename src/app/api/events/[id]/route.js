@@ -5,9 +5,10 @@ import {
 } from '@/modules/events/events-service'
 import { ApiError } from '@/shared/errors/api-error'
 import { ApiResponse } from '@/shared/utils/api-response'
+import { withAuth } from '@/shared/middlewares/with-auth'
 import { rateLimiter } from '@/shared/utils/rate-limitter'
 
-export async function GET(request, { params }) {
+export const GET = withAuth(async function (request, { params }, userId) {
   const limit = rateLimiter(request)
   if (limit) return limit
 
@@ -15,7 +16,7 @@ export async function GET(request, { params }) {
   const { id } = await params
 
   try {
-    const data = await getEventById(id, url)
+    const data = await getEventById(id, url, userId)
     return ApiResponse.ok('Event fetched successfully', data)
   } catch (error) {
     const apiError =
@@ -23,15 +24,11 @@ export async function GET(request, { params }) {
         ? error
         : ApiError.server('Failed to fetch event')
 
-    return ApiResponse.error(
-      apiError.message,
-      apiError.statusCode,
-      apiError.errors,
-    )
+    return ApiResponse.error(apiError.message, apiError.statusCode, apiError.errors)
   }
-}
+})
 
-export async function PATCH(request, { params }) {
+export const PATCH = withAuth(async function (request, { params }, userId) {
   const limit = rateLimiter(request)
   if (limit) return limit
 
@@ -40,7 +37,7 @@ export async function PATCH(request, { params }) {
 
   try {
     const payload = await request.json()
-    const data = await updateEvent(id, payload, url)
+    const data = await updateEvent(id, payload, url, userId)
     return ApiResponse.ok('Event updated successfully', data)
   } catch (error) {
     const apiError =
@@ -48,15 +45,11 @@ export async function PATCH(request, { params }) {
         ? error
         : ApiError.server('Failed to update event')
 
-    return ApiResponse.error(
-      apiError.message,
-      apiError.statusCode,
-      apiError.errors,
-    )
+    return ApiResponse.error(apiError.message, apiError.statusCode, apiError.errors)
   }
-}
+})
 
-export async function DELETE(request, { params }) {
+export const DELETE = withAuth(async function (request, { params }, userId) {
   const limit = rateLimiter(request)
   if (limit) return limit
 
@@ -64,7 +57,7 @@ export async function DELETE(request, { params }) {
   const { id } = await params
 
   try {
-    await deleteEvent(id, url)
+    await deleteEvent(id, url, userId)
     return ApiResponse.ok('Event deleted successfully')
   } catch (error) {
     const apiError =
@@ -72,10 +65,6 @@ export async function DELETE(request, { params }) {
         ? error
         : ApiError.server('Failed to delete event')
 
-    return ApiResponse.error(
-      apiError.message,
-      apiError.statusCode,
-      apiError.errors,
-    )
+    return ApiResponse.error(apiError.message, apiError.statusCode, apiError.errors)
   }
-}
+})

@@ -34,74 +34,88 @@ export async function getSession(urlEndpoint = 'auth:getSession') {
   }
 }
 
-export async function registerUser(payload, urlEndpoint = 'auth:register') {
+export async function register(payload, urlEndpoint) {
   const startTime = Date.now()
   const action = 'auth:register'
 
   try {
     const validated = registerRequestDto.parse(payload)
-    const { name, email, password } = validated
-    const defaultHeaders = await headers()
 
-    const res = await auth.api.signUpEmail({
+    const existing = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, validated.email))
+      .limit(1)
+
+    if (existing[0]) throw ApiError.conflict('Email already registered')
+
+    // Daftarkan user lewat better-auth
+    await auth.api.signUpEmail({
       body: {
-        name,
-        email,
-        password,
+        name: validated.name,
+        email: validated.email,
+        password: validated.password,
       },
-      headers: defaultHeaders,
     })
 
-    if (!res || res.error) {
-      throw ApiError.badRequest(
-        res?.error?.message || 'Failed to create user data.',
-      )
-    }
+    // Ambil user yang baru dibuat untuk response DTO
+    const [created] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, validated.email))
+      .limit(1)
 
-    logger.info('User saved to db successfully', {
+    const user = userResponseDto.parse(created)
+
+    logger.info('User registered successfully', {
       action,
       endpoint: urlEndpoint,
-      userId: res?.user?.id,
+      id: created.id,
       duration: `${Date.now() - startTime}ms`,
       timestamp: new Date().toISOString(),
     })
 
-    return res
+    return { user }
   } catch (error) {
     handleError(error, { action, endpoint: urlEndpoint, startTime })
   }
 }
 
-export async function loginUser(payload, urlEndpoint = 'auth:login') {
+export async function login(payload, urlEndpoint) {
   const startTime = Date.now()
   const action = 'auth:login'
 
   try {
     const validated = loginRequestDto.parse(payload)
-    const { email, password } = validated
-    const defaultHeaders = await headers()
 
-    const res = await auth.api.signInEmail({
+    // Login lewat better-auth, response-nya sudah include token/session
+    const result = await auth.api.signInEmail({
       body: {
-        email,
-        password,
+        email: validated.email,
+        password: validated.password,
       },
-      headers: defaultHeaders,
     })
 
-    if (!res || res.error) {
-      throw ApiError.unauthorized(res?.error?.message || 'Login failed')
-    }
+    if (!result) throw ApiError.unauthorized('Invalid email or password')
+
+    const [row] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, validated.email))
+      .limit(1)
+
+    const user = userResponseDto.parse(row)
 
     logger.info('User logged in successfully', {
       action,
       endpoint: urlEndpoint,
-      userId: res?.user?.id,
+      id: row.id,
       duration: `${Date.now() - startTime}ms`,
       timestamp: new Date().toISOString(),
     })
 
-    return res
+    // token dari better-auth session
+    return { token: result.token, user }
   } catch (error) {
     handleError(error, { action, endpoint: urlEndpoint, startTime })
   }
