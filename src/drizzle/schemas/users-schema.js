@@ -8,11 +8,9 @@ export const users = pgTable(
   {
     ...globalId,
 
-    username: varchar('username', { length: 10 }).notNull().unique(),
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 320 }).notNull().unique(),
     emailVerified: boolean('email_verified').default(false).notNull(),
-    password: text('password').notNull(),
     image: text('image'),
 
     role: UserRoleEnum('role').default('user'),
@@ -21,7 +19,7 @@ export const users = pgTable(
     ...globalTimestamps,
   },
   (t) => [
-    index('users_username_email_idx').on(t.username, t.email),
+    index('users_name_email_idx').on(t.name, t.email),
     index('users_active_idx').on(t.id).where(sql`${t.status} = 'active'`),
   ],
 )

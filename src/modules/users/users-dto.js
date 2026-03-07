@@ -19,7 +19,6 @@ export const createUserRequestDto = insertUserSchema
 
 export const updateUserRequestDto = insertUserSchema
   .pick({
-    username: true,
     name: true,
     email: true,
     password: true,

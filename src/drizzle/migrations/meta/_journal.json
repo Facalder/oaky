@@ -5,22 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1772825610749,
+      "when": 1772871850048,
       "tag": "0000_init",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1772861774797,
-      "tag": "0001_add_tasks_completion",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1772869227406,
-      "tag": "0002_real_harpoon",
+      "when": 1772872881450,
+      "tag": "0001_delete_password",
       "breakpoints": true
     }
   ]

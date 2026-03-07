@@ -17,7 +17,7 @@ export const envSchema = z.object({
   BETTER_AUTH_SECRET: z
     .string()
     .min(32, 'Secret must be at least 32 characters'),
-  BETTER_AUTH_URL: z.url('Invalid URL'),
+  BETTER_AUTH_URL: z.string().url('Invalid URL'),
 })
 
 export const result = envSchema?.safeParse(process.env)
