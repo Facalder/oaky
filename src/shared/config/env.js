@@ -11,6 +11,8 @@ export const envSchema = z.object({
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace'])
     .default('info'),
+
+  NEXT_PUBLIC_API_BASE_URL: z.url('Invalid URL'),
 })
 
 export const result = envSchema?.safeParse(process.env)
