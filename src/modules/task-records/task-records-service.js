@@ -12,7 +12,7 @@ import {
   updateTaskRecordRequestDto,
 } from './task-records-dto'
 
-export async function getAllTaskRecords() {
+export async function getAllTaskRecords(urlEndpoint) {
   const startTime = Date.now()
 
   try {
@@ -20,26 +20,32 @@ export async function getAllTaskRecords() {
     const rows = await db.select().from(taskRecords)
     const data = taskRecordListResponseDto.parse(rows)
 
-    logger.info({
+    logger.info('Task records fetched successfully', {
       action: 'taskRecords:getAll',
-      count: data.length,
-      durationMs: Date.now() - startTime,
+      endpoint: urlEndpoint,
+      count: rows.length,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return data
   } catch (error) {
-    logger.error({
+    logger.error('Failed to fetch task records', {
       action: 'taskRecords:getAll',
-      error,
-      durationMs: Date.now() - startTime,
+      endpoint: urlEndpoint,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to fetch task records')
   }
 }
 
-export async function getTaskRecordsById(id) {
+export async function getTaskRecordsById(id, urlEndpoint) {
   const startTime = Date.now()
 
   try {
@@ -57,28 +63,35 @@ export async function getTaskRecordsById(id) {
 
     const data = taskRecordResponseDto.parse(row)
 
-    logger.info({
+    logger.info('Task record fetched successfully', {
       action: 'taskRecords:getById',
+      endpoint: urlEndpoint,
       id,
-      durationMs: Date.now() - startTime,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return data
   } catch (error) {
-    logger.error({
+    logger.error('Failed to fetch task record', {
       action: 'taskRecords:getById',
+      endpoint: urlEndpoint,
       id,
-      error,
-      durationMs: Date.now() - startTime,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     if (error?.name === 'ApiError') throw error
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to fetch task record')
   }
 }
 
-export async function createTaskRecord(payload) {
+export async function createTaskRecord(payload, urlEndpoint) {
   const startTime = Date.now()
 
   try {
@@ -88,27 +101,34 @@ export async function createTaskRecord(payload) {
     const [created] = await db.insert(taskRecords).values(validated).returning()
     const data = taskRecordResponseDto.parse(created)
 
-    logger.info({
+    logger.info('Task record created successfully', {
       action: 'taskRecords:create',
+      endpoint: urlEndpoint,
       id: data.id,
-      durationMs: Date.now() - startTime,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return data
   } catch (error) {
-    logger.error({
+    logger.error('Failed to create task record', {
       action: 'taskRecords:create',
-      error,
-      durationMs: Date.now() - startTime,
+      endpoint: urlEndpoint,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     if (error?.name === 'ApiError') throw error
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to create task record')
   }
 }
 
-export async function updateTaskRecord(id, payload) {
+export async function updateTaskRecord(id, payload, urlEndpoint) {
   const startTime = Date.now()
 
   try {
@@ -126,28 +146,35 @@ export async function updateTaskRecord(id, payload) {
 
     const data = taskRecordResponseDto.parse(updated)
 
-    logger.info({
+    logger.info('Task record updated successfully', {
       action: 'taskRecords:update',
+      endpoint: urlEndpoint,
       id,
-      durationMs: Date.now() - startTime,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return data
   } catch (error) {
-    logger.error({
+    logger.error('Failed to update task record', {
       action: 'taskRecords:update',
+      endpoint: urlEndpoint,
       id,
-      error,
-      durationMs: Date.now() - startTime,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     if (error?.name === 'ApiError') throw error
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to update task record')
   }
 }
 
-export async function deleteTaskRecord(id) {
+export async function deleteTaskRecord(id, urlEndpoint) {
   const startTime = Date.now()
 
   try {
@@ -160,21 +187,28 @@ export async function deleteTaskRecord(id) {
       throw ApiError.notFound('Task record not found')
     }
 
-    logger.info({
+    logger.info('Task record deleted successfully', {
       action: 'taskRecords:delete',
+      endpoint: urlEndpoint,
       id,
-      durationMs: Date.now() - startTime,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return deleted
   } catch (error) {
-    logger.error({
+    logger.error('Failed to delete task record', {
       action: 'taskRecords:delete',
+      endpoint: urlEndpoint,
       id,
-      error,
-      durationMs: Date.now() - startTime,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     if (error?.name === 'ApiError') throw error
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to delete task record')

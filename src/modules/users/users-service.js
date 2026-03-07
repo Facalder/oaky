@@ -12,33 +12,40 @@ import {
   userResponseDto,
 } from './users-dto'
 
-export async function getAllUsers() {
+export async function getAllUsers(urlEndpoint) {
   const startTime = Date.now()
 
   try {
+    // TODO: filter by authenticated user when auth is ready
     const rows = await db.select().from(users)
     const data = userListResponseDto.parse(rows)
 
-    logger.info({
+    logger.info('Users fetched successfully', {
       action: 'users:getAll',
-      count: data.length,
-      durationMs: Date.now() - startTime,
+      endpoint: urlEndpoint,
+      count: rows.length,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return data
   } catch (error) {
-    logger.error({
+    logger.error('Failed to fetch users', {
       action: 'users:getAll',
-      error,
-      durationMs: Date.now() - startTime,
+      endpoint: urlEndpoint,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to fetch users')
   }
 }
 
-export async function getUsersById(id) {
+export async function getUsersById(id, urlEndpoint) {
   const startTime = Date.now()
 
   try {
@@ -51,57 +58,72 @@ export async function getUsersById(id) {
 
     const data = userResponseDto.parse(row)
 
-    logger.info({
+    logger.info('User fetched successfully', {
       action: 'users:getById',
+      endpoint: urlEndpoint,
       id,
-      durationMs: Date.now() - startTime,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return data
   } catch (error) {
-    logger.error({
+    logger.error('Failed to fetch user', {
       action: 'users:getById',
+      endpoint: urlEndpoint,
       id,
-      error,
-      durationMs: Date.now() - startTime,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     if (error?.name === 'ApiError') throw error
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to fetch user')
   }
 }
 
-export async function createUser(payload) {
+export async function createUser(payload, urlEndpoint) {
   const startTime = Date.now()
 
   try {
     const validated = createUserRequestDto.parse(payload)
 
+    // TODO: hash password before storing when auth is ready
     const [created] = await db.insert(users).values(validated).returning()
     const data = userResponseDto.parse(created)
 
-    logger.info({
+    logger.info('User created successfully', {
       action: 'users:create',
+      endpoint: urlEndpoint,
       id: data.id,
-      durationMs: Date.now() - startTime,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return data
   } catch (error) {
-    logger.error({
+    logger.error('Failed to create user', {
       action: 'users:create',
-      error,
-      durationMs: Date.now() - startTime,
+      endpoint: urlEndpoint,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     if (error?.name === 'ApiError') throw error
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to create user')
   }
 }
 
-export async function updateUser(id, payload) {
+export async function updateUser(id, payload, urlEndpoint) {
   const startTime = Date.now()
 
   try {
@@ -119,28 +141,35 @@ export async function updateUser(id, payload) {
 
     const data = userResponseDto.parse(updated)
 
-    logger.info({
+    logger.info('User updated successfully', {
       action: 'users:update',
+      endpoint: urlEndpoint,
       id,
-      durationMs: Date.now() - startTime,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return data
   } catch (error) {
-    logger.error({
+    logger.error('Failed to update user', {
       action: 'users:update',
+      endpoint: urlEndpoint,
       id,
-      error,
-      durationMs: Date.now() - startTime,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     if (error?.name === 'ApiError') throw error
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to update user')
   }
 }
 
-export async function deleteUser(id) {
+export async function deleteUser(id, urlEndpoint) {
   const startTime = Date.now()
 
   try {
@@ -150,21 +179,28 @@ export async function deleteUser(id) {
       throw ApiError.notFound('User not found')
     }
 
-    logger.info({
+    logger.info('User deleted successfully', {
       action: 'users:delete',
+      endpoint: urlEndpoint,
       id,
-      durationMs: Date.now() - startTime,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
 
     return deleted
   } catch (error) {
-    logger.error({
+    logger.error('Failed to delete user', {
       action: 'users:delete',
+      endpoint: urlEndpoint,
       id,
-      error,
-      durationMs: Date.now() - startTime,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      duration: `${Date.now() - startTime}ms`,
+      timestamp: new Date().toISOString(),
     })
+
     if (error?.name === 'ApiError') throw error
+
     throw error?.name === 'ZodError'
       ? ApiError.validation('Validation failed', error.errors)
       : ApiError.server('Failed to delete user')
