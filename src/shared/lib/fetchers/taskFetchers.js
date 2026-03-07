@@ -5,16 +5,15 @@ const RESOURCE_PATH = '/tasks'
 
 export async function fetchAllTasks(queryParams = {}) {
   try {
-    const searchParams = new URLSearchParams()
-  
-    Object.entries(queryParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        searchParams.append(key, value)
-      }
-    })
+    const allowedKeys = ['categoryId', 'status', 'isCompleted', 'isUpcoming']
+    const searchParams = new URLSearchParams(
+      Object.entries(queryParams).filter(
+        ([key, value]) => allowedKeys.includes(key) && value != null,
+      ),
+    )
 
-    const queryString = searchParams.toString()
-    const endpoint = queryString ? `${RESOURCE_PATH}?${queryString}` : RESOURCE_PATH
+    const query = searchParams.toString()
+    const endpoint = query ? `${RESOURCE_PATH}?${query}` : RESOURCE_PATH
 
     return await apiClient(endpoint, { method: 'GET' })
   } catch (error) {
@@ -44,7 +43,7 @@ export async function createTask(payload) {
   }
 }
 
-export async function updateTaskById(id, payload) {
+export async function updateTask(id, payload) {
   try {
     return await apiClient(`${RESOURCE_PATH}/${id}`, {
       method: 'PATCH',
@@ -56,7 +55,7 @@ export async function updateTaskById(id, payload) {
   }
 }
 
-export async function deleteTaskById(id) {
+export async function deleteTask(id) {
   try {
     return await apiClient(`${RESOURCE_PATH}/${id}`, { method: 'DELETE' })
   } catch (error) {
@@ -65,9 +64,11 @@ export async function deleteTaskById(id) {
   }
 }
 
-export async function toggleTaskCompletionById(id) {
+export async function toggleTaskCompletion(id) {
   try {
-    return await apiClient(`${RESOURCE_PATH}/${id}/toggle-completion`, { method: 'PATCH' })
+    return await apiClient(`${RESOURCE_PATH}/${id}/toggle-completion`, {
+      method: 'PATCH',
+    })
   } catch (error) {
     if (error instanceof ApiError) throw error
     throw ApiError.server(error.message || 'Failed to toggle task completion')

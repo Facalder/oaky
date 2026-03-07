@@ -7,7 +7,7 @@ export async function parseResponse(res) {
     throw new ApiError(
       json.statusCode || res.status,
       json.message || 'An error occurred during the request',
-      json.errors
+      json.errors,
     )
   }
 
@@ -15,9 +15,10 @@ export async function parseResponse(res) {
 }
 
 export async function apiClient(endpoint, options = {}) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api'
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api'
   const url = `${baseUrl}${endpoint}`
-  
+
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
